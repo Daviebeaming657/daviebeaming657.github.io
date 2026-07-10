@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Tally — split expenses with your group</title>
+<title>Tally — shared expense splitter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -84,6 +84,64 @@
   }
   .icon-btn:hover { background: #fff; border-color: var(--faint); }
   .icon-btn svg { width: 19px; height: 19px; }
+  .icon-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ---------- Group switcher ---------- */
+  .group-switch { position: relative; }
+  .group-btn {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--disp); font-weight: 700; font-size: 15px; color: var(--ink);
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px 12px; cursor: pointer; max-width: 240px;
+    transition: background .15s, border-color .15s;
+  }
+  .group-btn:hover { background: #fff; border-color: var(--faint); }
+  .gb-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
+  .gb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gb-chev { width: 16px; height: 16px; color: var(--soft); flex: none; transition: transform .18s; }
+  .group-switch.open .gb-chev { transform: rotate(180deg); }
+  .group-menu {
+    position: absolute; right: 0; top: calc(100% + 8px);
+    width: 264px; max-width: 78vw;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: 0 20px 50px -16px rgba(24,36,32,.42);
+    padding: 8px; z-index: 60; display: none;
+    max-height: 70vh; overflow-y: auto;
+  }
+  .group-switch.open .group-menu { display: block; }
+  .gm-cap { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); padding: 6px 10px 4px; }
+  .gm-item {
+    width: 100%; display: flex; align-items: center; gap: 10px;
+    background: transparent; border: none; border-radius: 9px;
+    padding: 9px 10px; cursor: pointer; text-align: left;
+    font-family: var(--body); font-size: 14px; color: var(--ink);
+  }
+  .gm-item:hover { background: var(--row); }
+  .gm-item.active { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .gm-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .gm-name { flex: 1; overflow: hidden; }
+  .gm-name > :first-child { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gm-sub { display: block; font-size: 11px; color: var(--soft); font-family: var(--mono); margin-top: 1px; }
+  .gm-check { width: 16px; height: 16px; color: var(--accent); flex: none; }
+  .gm-div { height: 1px; background: var(--line); margin: 6px 4px; }
+  .gm-new { color: var(--accent); font-weight: 600; }
+  .gm-new svg { width: 16px; height: 16px; }
+  .gm-newform { padding: 6px; display: flex; gap: 6px; }
+  .gm-newform input {
+    flex: 1; min-width: 0; font-family: var(--body); font-size: 14px; color: var(--ink);
+    background: var(--row); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+  }
+  .gm-newform input:focus { outline: none; border-color: var(--accent); }
+
+  /* settings: this-group controls */
+  .setg-input {
+    width: 100%; font-family: var(--body); font-size: 14px; color: var(--ink);
+    background: var(--row); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 12px; margin-top: 8px;
+  }
+  .setg-input:focus { outline: none; border-color: var(--accent); }
+  .setg-btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .btn-danger-ghost:disabled { opacity: .4; cursor: not-allowed; background: transparent; }
 
   /* ---------- Summary band ---------- */
   .summary { margin-top: 26px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
@@ -351,869 +409,1052 @@
   a { color: var(--accent); }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  /* ---------- Auth & config screens ---------- */
+  .screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .screen[hidden]{ display: none; }
+  .card-auth {
+    width: 100%; max-width: 420px; background: var(--card);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 28px 26px;
+  }
+  .card-auth .mark { width: 40px; height: 40px; margin-bottom: 16px; }
+  .card-auth h1 { font-family: var(--disp); font-weight: 800; font-size: 24px; margin: 0 0 4px; letter-spacing: -.02em; }
+  .card-auth p.lead { color: var(--soft); font-size: 14px; margin: 0 0 18px; line-height: 1.5; }
+  .card-auth label { display: block; font-size: 12px; font-weight: 600; color: var(--soft); text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 6px; }
+  .card-auth input {
+    width: 100%; font-family: var(--body); font-size: 15px; color: var(--ink);
+    background: var(--row); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px;
+  }
+  .card-auth input:focus { outline: none; border-color: var(--accent); }
+  .card-auth .btn { width: 100%; justify-content: center; margin-top: 16px; }
+  .auth-tabs { display: flex; gap: 6px; background: var(--row); border: 1px solid var(--line); border-radius: 10px; padding: 3px; margin-bottom: 4px; }
+  .auth-tabs button { flex: 1; border: none; background: transparent; border-radius: 8px; padding: 8px; font-family: var(--body); font-weight: 600; font-size: 13px; color: var(--soft); cursor: pointer; }
+  .auth-tabs button.on { background: var(--ink); color: #fff; }
+  .auth-note { font-size: 12.5px; color: var(--soft); margin: 16px 0 0; line-height: 1.5; }
+  .auth-msg { margin-top: 14px; font-size: 13.5px; padding: 10px 12px; border-radius: 10px; line-height: 1.45; }
+  .auth-msg.ok { background: var(--pos-bg); color: var(--pos); }
+  .auth-msg.err { background: var(--neg-bg); color: var(--neg); }
+  .linklike { background: none; border: none; color: var(--accent); font-family: var(--body); font-size: 13px; cursor: pointer; padding: 0; margin-top: 16px; text-decoration: underline; }
+
+  /* ---------- Account row ---------- */
+  .acct { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+  .acct .who { flex: 1; min-width: 0; }
+  .acct .who b { display: block; font-size: 14px; }
+  .acct .who span { display: block; font-size: 12.5px; color: var(--soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ---------- People add + contact + invite ---------- */
+  .add-row { display: flex; gap: 8px; padding: 14px 16px 0; }
+  .add-row2 { padding: 8px 16px 2px; }
+  .add-row input, .add-row2 input {
+    flex: 1; width: 100%; font-family: var(--body); font-size: 14px; color: var(--ink);
+    background: var(--row); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+  }
+  .add-row input:focus, .add-row2 input:focus { outline: none; border-color: var(--accent); }
+  .person .pname .contact { display: block; font-family: var(--mono); font-size: 11px; color: var(--soft); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .joined-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pos); flex: none; }
+  .invite-btn {
+    flex: none; display: inline-flex; align-items: center; gap: 5px; font-family: var(--body); font-weight: 600; font-size: 12px;
+    color: var(--accent); background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 5px 9px; cursor: pointer; margin-left: 2px;
+  }
+  .invite-btn:hover { background: #fff; border-color: var(--accent); }
+  .invite-btn svg { width: 13px; height: 13px; }
+
+  /* ---------- Settings group controls ---------- */
+  .setg-input {
+    width: 100%; font-family: var(--body); font-size: 14px; color: var(--ink);
+    background: var(--row); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-top: 8px;
+  }
+  .setg-input:focus { outline: none; border-color: var(--accent); }
+  .setg-btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .btn-danger-ghost:disabled { opacity: .4; cursor: not-allowed; background: transparent; }
+  .linkrow { display: flex; gap: 8px; margin-top: 10px; }
+  .linkrow input { flex: 1; min-width: 0; font-family: var(--mono); font-size: 12px; color: var(--soft); background: var(--row); border: 1px solid var(--line); border-radius: 9px; padding: 9px 10px; }
+
+  /* ---------- Group switcher ---------- */
+  .group-switch { position: relative; }
+  .group-btn {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--disp); font-weight: 700; font-size: 15px; color: var(--ink);
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px 12px; cursor: pointer; max-width: 240px; transition: background .15s, border-color .15s;
+  }
+  .group-btn:hover { background: #fff; border-color: var(--faint); }
+  .gb-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
+  .gb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gb-chev { width: 16px; height: 16px; color: var(--soft); flex: none; transition: transform .18s; }
+  .group-switch.open .gb-chev { transform: rotate(180deg); }
+  .group-menu {
+    position: absolute; right: 0; top: calc(100% + 8px);
+    width: 264px; max-width: 78vw;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: 0 20px 50px -16px rgba(24,36,32,.42);
+    padding: 8px; z-index: 60; display: none; max-height: 70vh; overflow-y: auto;
+  }
+  .group-switch.open .group-menu { display: block; }
+  .gm-cap { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); padding: 6px 10px 4px; }
+  .gm-item {
+    width: 100%; display: flex; align-items: center; gap: 10px;
+    background: transparent; border: none; border-radius: 9px; padding: 9px 10px; cursor: pointer; text-align: left;
+    font-family: var(--body); font-size: 14px; color: var(--ink);
+  }
+  .gm-item:hover { background: var(--row); }
+  .gm-item.active { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .gm-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .gm-name { flex: 1; overflow: hidden; }
+  .gm-name > :first-child { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gm-check { width: 16px; height: 16px; color: var(--accent); flex: none; }
+  .gm-div { height: 1px; background: var(--line); margin: 6px 4px; }
+  .gm-new { color: var(--accent); font-weight: 600; }
+  .gm-new svg { width: 16px; height: 16px; }
+  .gm-newform { padding: 6px; display: flex; gap: 6px; }
+  .gm-newform input { flex: 1; min-width: 0; font-family: var(--body); font-size: 14px; color: var(--ink); background: var(--row); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .gm-newform input:focus { outline: none; border-color: var(--accent); }
+  .icon-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: #fff; padding: 11px 16px; border-radius: 10px; font-size: 13.5px;
+    box-shadow: 0 12px 30px -8px rgba(24,36,32,.5); opacity: 0; pointer-events: none;
+    transition: opacity .2s, transform .2s; z-index: 200; max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- Bootstrap empty state ---------- */
+  .bootstrap { text-align: center; padding: 60px 24px; }
+  .bootstrap h2 { font-family: var(--disp); font-weight: 800; font-size: 22px; margin: 14px 0 6px; }
+  .bootstrap p { color: var(--soft); font-size: 14px; max-width: 360px; margin: 0 auto 18px; line-height: 1.5; }
+  .foot-note.bad { color: var(--neg); }
 </style>
 </head>
 <body>
 
-<header class="topbar">
-  <div class="topbar-in">
-    <div class="brand">
-      <div class="mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#EAF3EA" stroke-width="2" stroke-linecap="round">
-          <line x1="5" y1="5" x2="5" y2="19"></line>
-          <line x1="9" y1="5" x2="9" y2="19"></line>
-          <line x1="13" y1="5" x2="13" y2="19"></line>
-          <line x1="17" y1="5" x2="17" y2="19"></line>
-          <line x1="3" y1="18" x2="19" y2="6"></line>
-        </svg>
-      </div>
-      <div>
-        <h1>Tally</h1>
-        <div class="sub">shared ledger</div>
-      </div>
-    </div>
-    <div class="grow"></div>
-    <input id="groupName" class="group-name" aria-label="Group name" maxlength="40" />
-    <button id="settingsBtn" class="icon-btn" aria-label="Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-    </button>
+<!-- ============ Config screen ============ -->
+<div id="configScreen" class="screen" hidden>
+  <div class="card-auth">
+    <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="7" y1="5" x2="7" y2="19"></line><line x1="12" y1="5" x2="12" y2="19"></line><line x1="17" y1="5" x2="17" y2="19"></line><line x1="3" y1="18" x2="19" y2="6"></line></svg></div>
+    <h1>Connect Tally</h1>
+    <p class="lead">Paste your Supabase project details to get started. You only do this once on this device.</p>
+    <label for="cfgUrl">Project URL</label>
+    <input id="cfgUrl" type="url" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false" />
+    <label for="cfgKey">Anon public key</label>
+    <input id="cfgKey" type="text" placeholder="eyJhbGci..." autocomplete="off" spellcheck="false" />
+    <button id="cfgSave" class="btn btn-primary">Connect</button>
+    <div id="cfgMsg" class="auth-msg err" style="display:none"></div>
+    <p class="auth-note">Both live under <b>Project Settings &rarr; API</b> in your Supabase dashboard. The anon key is designed to be embedded in a client app.</p>
   </div>
-</header>
+</div>
 
-<main class="wrap">
-  <div id="storageBanner" class="storage-banner">Heads up — saving isn't available in this view, so your ledger won't persist after you close it. You can still use everything below for now.</div>
-
-  <section class="summary">
-    <div class="band">
-      <p class="eyebrow">Total spent</p>
-      <div id="totalAmt" class="total-amt"><span class="cur">$</span>0.00</div>
-      <div class="band-meta">
-        <div><b id="mPeople">0</b><span>people</span></div>
-        <div><b id="mExpenses">0</b><span>expenses</span></div>
-        <div><b id="mSettled">0</b><span>payments logged</span></div>
+<!-- ============ Auth screen ============ -->
+<div id="authScreen" class="screen" hidden>
+  <div class="card-auth">
+    <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="7" y1="5" x2="7" y2="19"></line><line x1="12" y1="5" x2="12" y2="19"></line><line x1="17" y1="5" x2="17" y2="19"></line><line x1="3" y1="18" x2="19" y2="6"></line></svg></div>
+    <h1>Sign in to Tally</h1>
+    <p class="lead">Your identity in every group is tied to your email or phone.</p>
+    <div class="auth-tabs">
+      <button id="tabEmail" class="on" type="button">Email</button>
+      <button id="tabPhone" type="button">Phone</button>
+    </div>
+    <div id="paneEmail">
+      <label for="authEmail">Email address</label>
+      <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+      <button id="sendEmail" class="btn btn-primary">Email me a magic link</button>
+    </div>
+    <div id="panePhone" style="display:none">
+      <label for="authPhone">Phone number</label>
+      <input id="authPhone" type="tel" placeholder="+15125551234" autocomplete="tel" />
+      <button id="sendPhone" class="btn btn-primary">Text me a code</button>
+      <div id="codeWrap" style="display:none">
+        <label for="authCode">Enter the 6-digit code</label>
+        <input id="authCode" type="text" inputmode="numeric" placeholder="123456" />
+        <button id="verifyPhone" class="btn btn-primary">Verify &amp; sign in</button>
       </div>
     </div>
-    <div id="settleBand" class="band settle-band">
-      <div class="settle-headline">Add people to begin</div>
-      <div class="hint">Start by adding everyone splitting the costs.</div>
-    </div>
-  </section>
+    <div id="authMsg" class="auth-msg ok" style="display:none"></div>
+    <button id="resetCfg" class="linklike" type="button">Use a different Supabase project</button>
+  </div>
+</div>
 
-  <div class="grid">
-    <!-- Ledger -->
-    <section class="panel">
-      <div class="panel-head">
-        <h2>The ledger</h2>
-        <button id="addExpenseBtn" class="btn btn-primary btn-sm">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Add expense
+<!-- ============ App ============ -->
+<div id="appRoot" hidden>
+  <header class="topbar">
+    <div class="topbar-in">
+      <div class="brand">
+        <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="7" y1="5" x2="7" y2="19"></line><line x1="12" y1="5" x2="12" y2="19"></line><line x1="17" y1="5" x2="17" y2="19"></line><line x1="3" y1="18" x2="19" y2="6"></line></svg></div>
+        <div><h1>Tally</h1><div class="sub">shared ledger</div></div>
+      </div>
+      <div class="grow"></div>
+      <div class="group-switch">
+        <button id="groupBtn" class="group-btn" aria-haspopup="menu" aria-expanded="false" aria-label="Switch group">
+          <span class="gb-dot"></span>
+          <span id="groupBtnName" class="gb-name">Loading...</span>
+          <svg class="gb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
+        <div id="groupMenu" class="group-menu" role="menu"></div>
       </div>
-      <div class="ledger-head">
-        <span style="width:52px">Date</span>
-        <span>Item</span>
-        <span class="lh-amt">Amount</span>
-      </div>
-      <ul id="ledger" class="ledger"></ul>
-      <div id="ledgerEmpty" class="empty" style="display:none">
-        <div class="em-mark">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h13l3 3v13H4z"></path><line x1="8" y1="10" x2="16" y2="10"></line><line x1="8" y1="14" x2="16" y2="14"></line><line x1="8" y1="18" x2="12" y2="18"></line></svg>
-        </div>
-        <h3>No entries yet</h3>
-        <p>Add an expense to start the ledger. Every entry updates who owes whom automatically.</p>
-      </div>
-    </section>
-
-    <!-- Sidebar -->
-    <div class="col-side">
-      <section class="panel">
-        <div class="panel-head">
-          <h2>People</h2>
-          <span id="peopleCount" class="count">0</span>
-        </div>
-        <div class="add-person">
-          <input id="personInput" type="text" placeholder="Add a person…" maxlength="30" autocomplete="off" />
-          <button id="addPersonBtn" class="btn btn-primary btn-sm">Add</button>
-        </div>
-        <ul id="peopleList" class="person-list"></ul>
-      </section>
-
-      <section class="panel" id="settlePanel">
-        <div class="panel-head">
-          <h2>Settle up</h2>
-          <span id="settleCount" class="count"></span>
-        </div>
-        <div id="settleList" class="settle-list"></div>
-      </section>
+      <button id="settingsBtn" class="icon-btn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
     </div>
-  </div>
-</main>
+  </header>
 
-<button id="fabAdd" class="fab" aria-label="Add expense">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-  Add expense
-</button>
+  <main class="wrap">
+    <div id="storageBanner" class="storage-banner">Heads up &mdash; this browser is blocking local storage, so your sign-in may not stick. Try a normal browser tab (not private mode).</div>
 
-<!-- ========== Expense modal ========== -->
+    <div id="bootstrap" class="bootstrap" style="display:none">
+      <div class="em-mark" style="margin:0 auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h13l3 3v13H4z"></path><line x1="8" y1="10" x2="16" y2="10"></line><line x1="8" y1="14" x2="16" y2="14"></line><line x1="8" y1="18" x2="12" y2="18"></line></svg></div>
+      <h2>No groups yet</h2>
+      <p>Create a group, add the people splitting costs, then invite them by email or text.</p>
+      <button id="bootstrapNew" class="btn btn-primary">Create a group</button>
+    </div>
+
+    <div id="groupArea" style="display:none">
+      <section class="summary">
+        <div class="band">
+          <p class="eyebrow">Total spent</p>
+          <div id="totalAmt" class="total-amt"><span class="cur">$</span>0.00</div>
+          <div class="band-meta">
+            <div><b id="mPeople">0</b><span>people</span></div>
+            <div><b id="mExpenses">0</b><span>expenses</span></div>
+            <div><b id="mSettled">0</b><span>payments logged</span></div>
+          </div>
+        </div>
+        <div id="settleBand" class="band settle-band">
+          <div class="settle-headline">Add people to begin</div>
+          <div class="hint">Start by adding everyone splitting the costs.</div>
+        </div>
+      </section>
+
+      <div class="grid">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>The ledger</h2>
+            <button id="addExpenseBtn" class="btn btn-primary btn-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Add expense</button>
+          </div>
+          <div class="ledger-head"><span style="width:52px">Date</span><span>Item</span><span class="lh-amt">Amount</span></div>
+          <ul id="ledger" class="ledger"></ul>
+          <div id="ledgerEmpty" class="empty" style="display:none">
+            <div class="em-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h13l3 3v13H4z"></path><line x1="8" y1="10" x2="16" y2="10"></line><line x1="8" y1="14" x2="16" y2="14"></line><line x1="8" y1="18" x2="12" y2="18"></line></svg></div>
+            <h3>No entries yet</h3>
+            <p>Add an expense to start the ledger. Everyone in the group sees it update live.</p>
+          </div>
+        </section>
+
+        <div class="col-side">
+          <section class="panel">
+            <div class="panel-head"><h2>People</h2><span id="peopleCount" class="count">0</span></div>
+            <div class="add-row"><input id="personInput" type="text" placeholder="Name" maxlength="40" autocomplete="off" /><button id="addPersonBtn" class="btn btn-primary btn-sm">Add</button></div>
+            <div class="add-row2"><input id="personContact" type="text" placeholder="Email or phone &mdash; optional, lets you invite them" maxlength="80" autocomplete="off" spellcheck="false" /></div>
+            <ul id="peopleList" class="person-list"></ul>
+          </section>
+          <section class="panel" id="settlePanel">
+            <div class="panel-head"><h2>Settle up</h2><span id="settleCount" class="count"></span></div>
+            <div id="settleList" class="settle-list"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+  <button id="fabAdd" class="fab" aria-label="Add expense"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+</div>
+
+<!-- ============ Expense modal ============ -->
 <div id="expenseScrim" class="scrim" role="dialog" aria-modal="true" aria-labelledby="expTitle">
   <div class="modal">
-    <div class="modal-head">
-      <h2 id="expTitle">Add expense</h2>
-      <button class="icon-btn" data-close-expense aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-    </div>
+    <div class="modal-head"><h2 id="expTitle">Add expense</h2><button class="icon-btn" data-close-expense aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
     <div class="modal-body" id="expenseBody"></div>
-    <div class="modal-foot">
-      <span id="expNote" class="foot-note"></span>
-      <button class="btn btn-ghost" data-close-expense>Cancel</button>
-      <button id="expSave" class="btn btn-primary">Save expense</button>
-    </div>
+    <div class="modal-foot"><span id="expNote" class="foot-note"></span><button class="btn btn-ghost" data-close-expense>Cancel</button><button id="expSave" class="btn btn-primary">Save expense</button></div>
   </div>
 </div>
 
-<!-- ========== Settlement modal ========== -->
+<!-- ============ Settlement modal ============ -->
 <div id="settleScrim" class="scrim" role="dialog" aria-modal="true" aria-labelledby="setTitle">
   <div class="modal">
-    <div class="modal-head">
-      <h2 id="setTitle">Record a payment</h2>
-      <button class="icon-btn" data-close-settle aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-    </div>
+    <div class="modal-head"><h2 id="setTitle">Record a payment</h2><button class="icon-btn" data-close-settle aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
     <div class="modal-body" id="settleBody"></div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" data-close-settle>Cancel</button>
-      <button id="setSave" class="btn btn-primary">Record payment</button>
-    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" data-close-settle>Cancel</button><button id="setSave" class="btn btn-primary">Record payment</button></div>
   </div>
 </div>
 
-<!-- ========== Settings modal ========== -->
+<!-- ============ Settings modal ============ -->
 <div id="settingsScrim" class="scrim" role="dialog" aria-modal="true" aria-labelledby="setgTitle">
   <div class="modal">
-    <div class="modal-head">
-      <h2 id="setgTitle">Settings</h2>
-      <button class="icon-btn" data-close-settings aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-    </div>
+    <div class="modal-head"><h2 id="setgTitle">Settings</h2><button class="icon-btn" data-close-settings aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
     <div class="modal-body">
       <div class="settings-row" style="display:block">
-        <div class="lbl"><b>Currency</b><span>Shown next to every amount.</span></div>
+        <div class="lbl"><b>Account</b><span>Signed in on this device.</span></div>
+        <div class="acct">
+          <span class="avatar" id="acctAvatar" style="background:var(--accent)">?</span>
+          <div class="who"><b id="acctName">&mdash;</b><span id="acctId"></span></div>
+          <button id="signOutBtn" class="btn btn-ghost btn-sm">Sign out</button>
+        </div>
+      </div>
+      <div class="settings-row" style="display:block" id="groupSettings">
+        <div class="lbl"><b>This group</b><span>Rename it, or share a link to invite people.</span></div>
+        <input id="groupRename" class="setg-input" type="text" maxlength="60" placeholder="Group name" />
+        <div class="linkrow"><input id="inviteLink" type="text" readonly /><button id="copyLink" class="btn btn-ghost btn-sm">Copy</button></div>
+        <div class="setg-btns"><button id="leaveGroupBtn" class="btn btn-danger-ghost btn-sm">Leave group</button><button id="delGroupBtn" class="btn btn-danger-ghost btn-sm">Delete group</button></div>
+      </div>
+      <div class="settings-row" style="display:block" id="currencySettings">
+        <div class="lbl"><b>Currency</b><span>Shown next to every amount in this group.</span></div>
         <div id="curGrid" class="cur-grid"></div>
       </div>
-      <div class="settings-row">
-        <div class="lbl"><b>Export ledger</b><span>Download a backup as a JSON file.</span></div>
-        <button id="exportBtn" class="btn btn-ghost btn-sm">Download</button>
-      </div>
-      <div class="settings-row">
-        <div class="lbl"><b>Reset everything</b><span>Removes all people and entries. Can't be undone.</span></div>
-        <button id="resetBtn" class="btn btn-danger-ghost btn-sm">Reset</button>
-      </div>
     </div>
-    <div class="modal-foot">
-      <button class="btn btn-primary" data-close-settings>Done</button>
-    </div>
+    <div class="modal-foot"><button class="btn btn-primary" data-close-settings>Done</button></div>
   </div>
 </div>
 
-<script>
-"use strict";
-(function () {
-  // ---------------------------------------------------------------- state
-  const STORE_KEY = "tally-state-v1";
-  let storageOK = true;
-  const PALETTE = ["#0E5C43","#B0472E","#2A6F97","#8A5A2B","#6A4C93","#1B7A5A","#A23E5C","#3E6B2E","#B07A16","#4A5568"];
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  let state = { v: 1, groupName: "Our Group", currency: "$", people: [], entries: [] };
+const CFG_KEY = "tally-cfg";
+const ACTIVE_KEY = "tally-active-group";
+const PALETTE = ["#0E5C43","#B0472E","#2A6F97","#8A5A2B","#6A4C93","#1B7A5A","#A23E5C","#3E6B2E","#B07A16","#4A5568"];
+const GROUP_COLORS = ["#0E5C43","#2A6F97","#8A5A2B","#6A4C93","#A23E5C","#1B7A5A","#B07A16","#3E6B2E"];
 
-  // Expense form working state
-  let ef = null;
-  // Settlement form working state
-  let sf = null;
+let supabase = null;
+let session = null;
+let channel = null;
+let state = { groups: [], group: null, members: [], entries: [] };
+let ef = null, sf = null;
 
-  // ---------------------------------------------------------------- utils
-  const $ = (s, r = document) => r.querySelector(s);
-  const el = (tag, cls, txt) => { const n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; };
-  const uid = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const $ = (s, r=document) => r.querySelector(s);
+const el = (t, c, x) => { const n=document.createElement(t); if(c) n.className=c; if(x!=null) n.textContent=x; return n; };
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const cur = () => (state.group && state.group.currency) || "$";
+function fmt(cents, withSign){
+  cents = Math.round(cents||0);
+  const neg = cents<0, abs = Math.abs(cents);
+  const s = cur() + Math.floor(abs/100).toLocaleString("en-US") + "." + String(abs%100).padStart(2,"0");
+  if(withSign) return (neg?"\u2212":"+")+s;
+  return (neg?"\u2212":"")+s;
+}
+function parseMoney(str){
+  const cleaned = String(str==null?"":str).replace(/[^0-9.]/g,"");
+  const parts = cleaned.split(".");
+  const norm = parts.length>1 ? parts[0]+"."+parts.slice(1).join("").slice(0,2) : parts[0];
+  const v = parseFloat(norm);
+  return (isNaN(v)||v<0)?0:Math.round(v*100);
+}
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function todayISO(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fmtDate(iso){ if(!iso) return ""; const p=String(iso).split("-").map(Number); return MONTHS[((p[1]||1)-1)]+" "+p[2]; }
+const initials = (name) => (name||"").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase() || "?";
 
-  function fmt(cents, withSign) {
-    const neg = cents < 0, abs = Math.abs(cents);
-    const s = state.currency + Math.floor(abs / 100).toLocaleString("en-US") + "." + String(abs % 100).padStart(2, "0");
-    if (withSign) return (neg ? "−" : "+") + s;
-    return (neg ? "−" : "") + s;
-  }
-  function parseMoney(str) {
-    const cleaned = String(str == null ? "" : str).replace(/[^0-9.]/g, "");
-    const parts = cleaned.split(".");
-    const norm = parts.length > 1 ? parts[0] + "." + parts.slice(1).join("").slice(0, 2) : parts[0];
-    const v = parseFloat(norm);
-    return (isNaN(v) || v < 0) ? 0 : Math.round(v * 100);
-  }
-  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  function todayISO() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
-  function fmtDate(iso) {
-    if (!iso) return "";
-    const [y, m, d] = iso.split("-").map(Number);
-    return MONTHS[(m || 1) - 1] + " " + d;
-  }
-  const initials = (name) => name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase() || "?";
-  const personById = (id) => state.people.find(p => p.id === id);
-  const personName = (id) => { const p = personById(id); return p ? p.name : "—"; };
-  const colorFor = (id) => { const i = state.people.findIndex(p => p.id === id); return PALETTE[(i < 0 ? 0 : i) % PALETTE.length]; };
+const memberById = (id) => state.members.find(m=>m.id===id);
+const memberName = (id) => { const m=memberById(id); return m?m.name:"\u2014"; };
+const colorForMember = (id) => { const i=state.members.findIndex(m=>m.id===id); return PALETTE[(i<0?0:i)%PALETTE.length]; };
+const avatarNode = (id) => { const a=el("span","avatar",initials(memberName(id))); a.style.background=colorForMember(id); return a; };
+const groupColor = (id) => { const i=state.groups.findIndex(g=>g.id===id); return GROUP_COLORS[(i<0?0:i)%GROUP_COLORS.length]; };
+const myUserId = () => session && session.user ? session.user.id : null;
+const myMember = () => state.members.find(m=>m.userId && m.userId===myUserId());
+const myDisplay = () => { if(!session||!session.user) return ""; const u=session.user; return u.email || u.phone || "Signed in"; };
 
-  // ---------------------------------------------------------------- split algorithms
-  function equalSplit(amountCents, ids) {
-    const n = ids.length; if (n === 0) return {};
-    const base = Math.floor(amountCents / n);
-    const remainder = amountCents - base * n;
-    const out = {};
-    ids.forEach((id, i) => out[id] = base + (i < remainder ? 1 : 0));
-    return out;
-  }
-  function sharesSplit(amountCents, sharesMap) {
-    const ids = Object.keys(sharesMap).filter(id => sharesMap[id] > 0);
-    const total = ids.reduce((s, id) => s + sharesMap[id], 0);
-    if (total <= 0) return {};
-    const rows = ids.map(id => { const exact = amountCents * sharesMap[id] / total; const v = Math.floor(exact); return { id, v, frac: exact - v }; });
-    let used = rows.reduce((s, r) => s + r.v, 0);
-    let left = amountCents - used;
-    rows.sort((a, b) => b.frac - a.frac);
-    for (let i = 0; i < left; i++) rows[i % rows.length].v++;
-    const out = {}; rows.forEach(r => out[r.id] = r.v); return out;
-  }
+const rowToEntry = (r) => ({ id:r.id, type:r.type, description:r.description, amountCents:Number(r.amount_cents), paidBy:r.paid_by, split:r.split||{}, splitMethod:r.split_method||"equal", shareCounts:r.share_counts||undefined, from:r.from_member, to:r.to_member, date:r.entry_date, createdAt: r.created_at ? Date.parse(r.created_at) : 0 });
+const rowToMember = (r) => ({ id:r.id, name:r.name, email:r.email, phone:r.phone, userId:r.user_id, colorIndex:r.color_index });
 
-  function computeBalances() {
-    const bal = {};
-    state.people.forEach(p => bal[p.id] = 0);
-    for (const e of state.entries) {
-      if (e.type === "expense") {
-        if (bal[e.paidBy] !== undefined) bal[e.paidBy] += e.amountCents;
-        for (const pid in e.split) if (bal[pid] !== undefined) bal[pid] -= e.split[pid];
-      } else if (e.type === "settlement") {
-        if (bal[e.from] !== undefined) bal[e.from] += e.amountCents;
-        if (bal[e.to] !== undefined) bal[e.to] -= e.amountCents;
-      }
+function getCfg(){ try{ const v=localStorage.getItem(CFG_KEY); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function saveCfg(url, anonKey){ try{ localStorage.setItem(CFG_KEY, JSON.stringify({url,anonKey})); }catch(e){} }
+function clearCfg(){ try{ localStorage.removeItem(CFG_KEY); }catch(e){} }
+function getActive(){ try{ return localStorage.getItem(ACTIVE_KEY)||null; }catch(e){ return null; } }
+function saveActive(id){ try{ localStorage.setItem(ACTIVE_KEY, id); }catch(e){} }
+function clearActive(){ try{ localStorage.removeItem(ACTIVE_KEY); }catch(e){} }
+
+let toastTimer=null;
+function toast(msg){
+  let t=$("#toast");
+  if(!t){ t=el("div","toast"); t.id="toast"; document.body.appendChild(t); }
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"), 3600);
+}
+function fail(error){
+  const parts=[];
+  if(error){ parts.push(error.message||String(error)); if(error.code) parts.push("code: "+error.code); if(error.details) parts.push("details: "+error.details); if(error.hint) parts.push("hint: "+error.hint); }
+  else parts.push("unknown error");
+  try{ toast(error && error.message ? error.message : "Something went wrong"); }catch(e){}
+  alert("Tally error:\n"+parts.join("\n"));
+}
+function copyText(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).catch(()=>{}); }
+  else { const ta=el("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(e){} ta.remove(); }
+}
+
+function showScreen(name){
+  $("#configScreen").hidden = name!=="config";
+  $("#authScreen").hidden = name!=="auth";
+  $("#appRoot").hidden = name!=="app";
+}
+
+function equalSplit(amountCents, ids){
+  const n=ids.length; if(n===0) return {};
+  const base=Math.floor(amountCents/n); const rem=amountCents-base*n; const out={};
+  ids.forEach((id,i)=>out[id]=base+(i<rem?1:0)); return out;
+}
+function sharesSplit(amountCents, sharesMap){
+  const ids=Object.keys(sharesMap).filter(id=>sharesMap[id]>0);
+  const total=ids.reduce((s,id)=>s+sharesMap[id],0); if(total<=0) return {};
+  const rows=ids.map(id=>{ const exact=amountCents*sharesMap[id]/total; const v=Math.floor(exact); return {id,v,frac:exact-v}; });
+  let used=rows.reduce((s,r)=>s+r.v,0); let left=amountCents-used;
+  rows.sort((a,b)=>b.frac-a.frac);
+  for(let i=0;i<left;i++) rows[i%rows.length].v++;
+  const out={}; rows.forEach(r=>out[r.id]=r.v); return out;
+}
+function computeBalances(){
+  const bal={}; state.members.forEach(m=>bal[m.id]=0);
+  for(const e of state.entries){
+    if(e.type==="expense"){
+      if(bal[e.paidBy]!==undefined) bal[e.paidBy]+=e.amountCents;
+      for(const pid in e.split) if(bal[pid]!==undefined) bal[pid]-=e.split[pid];
+    } else if(e.type==="settlement"){
+      if(bal[e.from]!==undefined) bal[e.from]+=e.amountCents;
+      if(bal[e.to]!==undefined) bal[e.to]-=e.amountCents;
     }
-    return bal;
   }
-  function simplifyDebts(bal) {
-    const creditors = [], debtors = [];
-    for (const id in bal) { if (bal[id] > 0) creditors.push({ id, amt: bal[id] }); else if (bal[id] < 0) debtors.push({ id, amt: -bal[id] }); }
-    creditors.sort((a, b) => b.amt - a.amt || (a.id < b.id ? -1 : 1));
-    debtors.sort((a, b) => b.amt - a.amt || (a.id < b.id ? -1 : 1));
-    const tx = []; let i = 0, j = 0;
-    while (i < debtors.length && j < creditors.length) {
-      const pay = Math.min(debtors[i].amt, creditors[j].amt);
-      tx.push({ from: debtors[i].id, to: creditors[j].id, amt: pay });
-      debtors[i].amt -= pay; creditors[j].amt -= pay;
-      if (debtors[i].amt === 0) i++;
-      if (creditors[j].amt === 0) j++;
+  return bal;
+}
+function simplifyDebts(bal){
+  const creditors=[], debtors=[];
+  for(const id in bal){ if(bal[id]>0) creditors.push({id,amt:bal[id]}); else if(bal[id]<0) debtors.push({id,amt:-bal[id]}); }
+  creditors.sort((a,b)=>b.amt-a.amt || (a.id<b.id?-1:1));
+  debtors.sort((a,b)=>b.amt-a.amt || (a.id<b.id?-1:1));
+  const tx=[]; let i=0,j=0;
+  while(i<debtors.length && j<creditors.length){
+    const pay=Math.min(debtors[i].amt, creditors[j].amt);
+    tx.push({from:debtors[i].id, to:creditors[j].id, amt:pay});
+    debtors[i].amt-=pay; creditors[j].amt-=pay;
+    if(debtors[i].amt===0) i++; if(creditors[j].amt===0) j++;
+  }
+  return tx;
+}
+
+async function loadGroups(){
+  const { data, error } = await supabase.from("groups").select("*").order("created_at",{ascending:true});
+  if(error){ fail(error); return; }
+  state.groups = data || [];
+}
+async function loadMembers(gid){
+  const { data, error } = await supabase.from("members").select("*").eq("group_id",gid).order("created_at",{ascending:true});
+  if(error){ fail(error); return; }
+  state.members = (data||[]).map(rowToMember);
+}
+async function loadEntries(gid){
+  const { data, error } = await supabase.from("entries").select("*").eq("group_id",gid);
+  if(error){ fail(error); return; }
+  state.entries = (data||[]).map(rowToEntry);
+}
+async function openGroup(id){
+  const g = state.groups.find(x=>x.id===id);
+  if(!g){ state.group=null; render(); return; }
+  state.group = g;
+  await Promise.all([loadMembers(id), loadEntries(id)]);
+  subscribe(id);
+  saveActive(id);
+  render();
+}
+
+function subscribe(gid){
+  if(channel){ supabase.removeChannel(channel); channel=null; }
+  channel = supabase.channel("tally-"+gid)
+    .on("postgres_changes",{event:"*",schema:"public",table:"entries",filter:"group_id=eq."+gid}, async ()=>{ await loadEntries(gid); render(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"members",filter:"group_id=eq."+gid}, async ()=>{ await loadMembers(gid); render(); })
+    .subscribe();
+}
+
+async function createGroup(name, currency){
+  const { data, error } = await supabase.rpc("create_group",{ p_name:(name||"").trim()||"Our Group", p_currency:currency||"$" });
+  if(error){ fail(error); return; }
+  await loadGroups(); closeGroupMenu(); await openGroup(data);
+}
+async function renameGroup(name){
+  if(!state.group) return;
+  const { error } = await supabase.from("groups").update({ name }).eq("id", state.group.id);
+  if(error){ fail(error); return; }
+  state.group.name = name;
+  const gg = state.groups.find(g=>g.id===state.group.id); if(gg) gg.name=name;
+  renderGroupSwitcher();
+}
+async function setCurrency(c){
+  if(!state.group) return;
+  const { error } = await supabase.from("groups").update({ currency:c }).eq("id", state.group.id);
+  if(error){ fail(error); return; }
+  state.group.currency = c; buildCurrencyGrid(); render();
+}
+async function afterGroupExit(){
+  if(channel){ supabase.removeChannel(channel); channel=null; }
+  state.group=null; state.members=[]; state.entries=[]; clearActive();
+  closeScrim("#settingsScrim");
+  await loadGroups();
+  const next = state.groups[0];
+  if(next) await openGroup(next.id); else { render(); renderGroupSwitcher(); }
+}
+async function leaveGroup(){
+  const me = myMember(); if(!me){ toast("You are not a member of this group."); return; }
+  if(!confirm('Leave "'+(state.group.name||"this group")+'"? You can be re-invited later.')) return;
+  const { error } = await supabase.from("members").delete().eq("id", me.id);
+  if(error){ fail(error); return; }
+  await afterGroupExit();
+}
+async function deleteGroup(){
+  if(!confirm('Delete "'+(state.group.name||"this group")+'" for everyone? This removes all its people and entries and cannot be undone.')) return;
+  const { error } = await supabase.from("groups").delete().eq("id", state.group.id);
+  if(error){ fail(error); return; }
+  await afterGroupExit();
+}
+
+async function addMember(name, contact){
+  name=(name||"").trim(); if(!name) return;
+  let email=null, phone=null;
+  contact=(contact||"").trim();
+  if(contact){ if(contact.includes("@")) email=contact.toLowerCase(); else phone=contact.replace(/[^\d+]/g,""); }
+  const { error } = await supabase.from("members").insert({ group_id:state.group.id, name, email, phone, color_index: state.members.length%10 });
+  if(error){ fail(error); return; }
+  await loadMembers(state.group.id); render();
+}
+async function renameMember(id, name){
+  name=(name||"").trim(); if(!name) return;
+  const { error } = await supabase.from("members").update({ name }).eq("id", id);
+  if(error){ fail(error); return; }
+  await loadMembers(state.group.id); render();
+}
+async function removeMember(id){
+  const { error } = await supabase.from("members").delete().eq("id", id);
+  if(error){ fail(error); return; }
+  await loadMembers(state.group.id); render();
+}
+function inviteLink(){ return location.origin + location.pathname + "?join=" + (state.group?state.group.id:""); }
+function inviteMember(m){
+  const link = inviteLink();
+  const gname = state.group ? state.group.name : "our group";
+  const body = "You are invited to split expenses on \""+gname+"\" in Tally.\n\nOpen this link and sign in with this "+(m.email?"email address":"phone number")+" to join:\n"+link;
+  if(m.email){
+    location.href = "mailto:"+encodeURIComponent(m.email)+"?subject="+encodeURIComponent('Join "'+gname+'" on Tally')+"&body="+encodeURIComponent(body);
+  } else if(m.phone){
+    location.href = "sms:"+encodeURIComponent(m.phone)+"?&body="+encodeURIComponent(body);
+  } else {
+    copyText(link); toast("Invite link copied");
+  }
+}
+
+async function addExpense(entry){
+  const row = { group_id:state.group.id, type:"expense", description:entry.description, amount_cents:entry.amountCents, paid_by:entry.paidBy, split:entry.split, split_method:entry.splitMethod, share_counts:entry.shareCounts||null, entry_date:entry.date, created_by:myUserId() };
+  const { error } = await supabase.from("entries").insert(row);
+  if(error){ fail(error); return false; }
+  await loadEntries(state.group.id); render(); return true;
+}
+async function updateExpense(id, entry){
+  const { error } = await supabase.from("entries").update({ description:entry.description, amount_cents:entry.amountCents, paid_by:entry.paidBy, split:entry.split, split_method:entry.splitMethod, share_counts:entry.shareCounts||null, entry_date:entry.date }).eq("id",id);
+  if(error){ fail(error); return false; }
+  await loadEntries(state.group.id); render(); return true;
+}
+async function addSettlement(s){
+  const row = { group_id:state.group.id, type:"settlement", amount_cents:s.amountCents, from_member:s.from, to_member:s.to, entry_date:s.date, created_by:myUserId() };
+  const { error } = await supabase.from("entries").insert(row);
+  if(error){ fail(error); return false; }
+  await loadEntries(state.group.id); render(); return true;
+}
+async function deleteEntry(id){
+  const { error } = await supabase.from("entries").delete().eq("id",id);
+  if(error){ fail(error); return; }
+  await loadEntries(state.group.id); render();
+}
+
+function render(){
+  const hasGroup = !!state.group;
+  $("#bootstrap").style.display = (!hasGroup && state.groups.length===0) ? "block" : "none";
+  $("#groupArea").style.display = hasGroup ? "block" : "none";
+  $("#fabAdd").style.display = hasGroup ? "" : "none";
+  if(hasGroup){ renderSummary(); renderMembers(); renderLedger(); renderSettle(); }
+  renderGroupSwitcher();
+}
+
+function renderSummary(){
+  const totalCents = state.entries.filter(e=>e.type==="expense").reduce((s,e)=>s+e.amountCents,0);
+  const t=$("#totalAmt");
+  t.innerHTML='<span class="cur">'+esc(cur())+'</span>'+Math.floor(totalCents/100).toLocaleString("en-US")+"."+String(totalCents%100).padStart(2,"0");
+  $("#mPeople").textContent=state.members.length;
+  $("#mExpenses").textContent=state.entries.filter(e=>e.type==="expense").length;
+  $("#mSettled").textContent=state.entries.filter(e=>e.type==="settlement").length;
+
+  const band=$("#settleBand"); const tx=simplifyDebts(computeBalances()); band.classList.remove("clear");
+  if(state.members.length===0){ band.innerHTML='<div class="settle-headline">Add people to begin</div><div class="hint">Start by adding everyone splitting the costs.</div>'; }
+  else if(state.entries.length===0){ band.innerHTML='<div class="settle-headline">Ready when you are</div><div class="hint">Log your first expense to see who owes what.</div>'; }
+  else if(tx.length===0){ band.classList.add("clear"); band.innerHTML='<div class="settle-headline">Everyone\u2019s square \ud83c\udf89</div><div class="hint">No outstanding balances in this group.</div>'; }
+  else { const owe=tx.reduce((s,x)=>s+x.amt,0); band.innerHTML='<div class="settle-headline">'+tx.length+' payment'+(tx.length>1?"s":"")+' to settle up</div><div class="hint">'+fmt(owe)+' is moving around the group. See the slips \u2192</div>'; }
+}
+
+function renderMembers(){
+  $("#peopleCount").textContent=state.members.length;
+  const bal=computeBalances(); const list=$("#peopleList"); list.innerHTML="";
+  if(state.members.length===0){
+    const li=el("li"); li.style.padding="0";
+    const em=el("div","empty"); em.style.padding="22px 20px";
+    em.innerHTML='<h3 style="font-size:15px">Nobody here yet</h3><p>Add people sharing expenses. Include an email or phone to invite them to join.</p>';
+    li.appendChild(em); list.appendChild(li); return;
+  }
+  for(const m of state.members){
+    const li=el("li","person"); li.appendChild(avatarNode(m.id));
+    const nameWrap=el("div","pname");
+    const line=el("div"); line.style.cssText="display:flex;align-items:center;gap:6px";
+    const nameTxt=el("span","name-txt", m.name); nameTxt.title="Click to rename"; nameTxt.addEventListener("click",()=>startRename(m.id, nameWrap));
+    line.appendChild(nameTxt);
+    if(m.userId){ const jd=el("span","joined-dot"); jd.title="Joined"; line.appendChild(jd); }
+    nameWrap.appendChild(line);
+    if(m.email||m.phone){ nameWrap.appendChild(el("span","contact", m.email||m.phone)); }
+    li.appendChild(nameWrap);
+
+    const c=bal[m.id]||0;
+    const badge=el("span","bal-badge "+(c>0?"bal-pos":c<0?"bal-neg":"bal-zero"));
+    badge.textContent=c===0?"settled":fmt(c,true);
+    badge.title=c>0?"Gets back "+fmt(c):c<0?"Owes "+fmt(-c):"All settled";
+    li.appendChild(badge);
+
+    const isMe = m.userId && m.userId===myUserId();
+    if((m.email||m.phone) && !m.userId && !isMe){
+      const inv=el("button","invite-btn");
+      inv.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="M22 2 15 22l-4-9-9-4z"></path></svg>Invite';
+      inv.title="Invite "+m.name;
+      inv.addEventListener("click",()=>inviteMember(m));
+      li.appendChild(inv);
     }
-    return tx;
+
+    const referenced = state.entries.some(e => (e.type==="expense"&&(e.paidBy===m.id||m.id in e.split)) || (e.type==="settlement"&&(e.from===m.id||e.to===m.id)));
+    const x=el("button","x-btn");
+    x.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    x.disabled = referenced;
+    x.title = referenced ? "In use by an entry \u2014 remove those first" : "Remove "+m.name;
+    x.addEventListener("click",()=>{ if(!referenced) removeMember(m.id); });
+    li.appendChild(x);
+
+    list.appendChild(li);
   }
+}
 
-  // ---------------------------------------------------------------- persistence
-  async function loadState() {
-    if (!window.storage) { storageOK = false; return; }
-    try {
-      const r = await window.storage.get(STORE_KEY);
-      if (r && r.value) {
-        const parsed = JSON.parse(r.value);
-        if (parsed && Array.isArray(parsed.people) && Array.isArray(parsed.entries)) state = Object.assign(state, parsed);
-      }
-    } catch (e) { /* first-run key-miss throws; that's fine */ }
-  }
-  let saveTimer = null;
-  function save() {
-    if (!storageOK || !window.storage) return;
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(async () => {
-      try { await window.storage.set(STORE_KEY, JSON.stringify(state)); }
-      catch (e) { storageOK = false; $("#storageBanner").classList.add("show"); }
-    }, 120);
-  }
+function startRename(id, wrap){
+  const m=memberById(id); if(!m) return;
+  wrap.innerHTML="";
+  const input=el("input","edit-in"); input.type="text"; input.value=m.name; input.maxLength=40;
+  wrap.appendChild(input); input.focus(); input.select();
+  const commit=()=>{ const v=input.value.trim(); if(v && v!==m.name) renameMember(id,v); else render(); };
+  input.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){e.preventDefault();commit();} else if(e.key==="Escape") render(); });
+  input.addEventListener("blur", commit);
+}
 
-  // ---------------------------------------------------------------- rendering
-  const avatarNode = (id) => { const a = el("span", "avatar", initials(personName(id))); a.style.background = colorFor(id); return a; };
+function splitSummary(e){
+  const ids=Object.keys(e.split); const n=ids.length; const uniq=new Set(Object.values(e.split));
+  if(n===0) return "no split";
+  if(uniq.size===1 && n===state.members.length) return "split evenly, all "+n;
+  if(uniq.size===1) return "split evenly, "+n+" "+(n===1?"person":"people");
+  return "custom split, "+n+" "+(n===1?"person":"people");
+}
 
-  function render() {
-    renderSummary();
-    renderPeople();
-    renderLedger();
-    renderSettle();
-  }
-
-  function renderSummary() {
-    const totalCents = state.entries.filter(e => e.type === "expense").reduce((s, e) => s + e.amountCents, 0);
-    const t = $("#totalAmt");
-    t.innerHTML = '<span class="cur">' + esc(state.currency) + "</span>" +
-      Math.floor(totalCents / 100).toLocaleString("en-US") + "." + String(totalCents % 100).padStart(2, "0");
-    $("#mPeople").textContent = state.people.length;
-    $("#mExpenses").textContent = state.entries.filter(e => e.type === "expense").length;
-    $("#mSettled").textContent = state.entries.filter(e => e.type === "settlement").length;
-
-    const band = $("#settleBand");
-    const tx = simplifyDebts(computeBalances());
-    band.classList.remove("clear");
-    if (state.people.length === 0) {
-      band.innerHTML = '<div class="settle-headline">Add people to begin</div><div class="hint">Start by adding everyone splitting the costs.</div>';
-    } else if (state.entries.length === 0) {
-      band.innerHTML = '<div class="settle-headline">Ready when you are</div><div class="hint">Log your first expense to see who owes what.</div>';
-    } else if (tx.length === 0) {
-      band.classList.add("clear");
-      band.innerHTML = '<div class="settle-headline">Everyone\u2019s square 🎉</div><div class="hint">No outstanding balances in this group.</div>';
+function renderLedger(){
+  const ul=$("#ledger"); const empty=$("#ledgerEmpty"); ul.innerHTML="";
+  if(state.entries.length===0){ empty.style.display="block"; return; }
+  empty.style.display="none";
+  const sorted=state.entries.slice().sort((a,b)=>(a.date<b.date?1:a.date>b.date?-1:0)||(b.createdAt-a.createdAt));
+  for(const e of sorted){
+    const li=el("li","entry"+(e.type==="settlement"?" settlement":""));
+    li.appendChild(el("span","date",fmtDate(e.date)));
+    const body=el("div","body"); const desc=el("div","desc");
+    if(e.type==="expense"){
+      desc.appendChild(document.createTextNode(e.description||"Expense")); body.appendChild(desc);
+      const meta=el("div","meta"); meta.innerHTML='<span class="payer">'+esc(memberName(e.paidBy))+'</span> paid \u00b7 '+esc(splitSummary(e)); body.appendChild(meta);
     } else {
-      const owe = tx.reduce((s, x) => s + x.amt, 0);
-      band.innerHTML = '<div class="settle-headline">' + tx.length + ' payment' + (tx.length > 1 ? "s" : "") + ' to settle up</div>' +
-        '<div class="hint">' + fmt(owe) + ' is moving around the group. See the slips \u2192</div>';
+      const tag=el("span","tag pay","payment"); desc.appendChild(tag);
+      desc.appendChild(document.createTextNode(memberName(e.from)+" \u2192 "+memberName(e.to))); body.appendChild(desc);
+      body.appendChild(el("div","meta","Settling up"));
     }
-  }
-
-  function renderPeople() {
-    $("#peopleCount").textContent = state.people.length;
-    const bal = computeBalances();
-    const list = $("#peopleList");
-    list.innerHTML = "";
-    if (state.people.length === 0) {
-      const li = el("li"); li.style.padding = "0";
-      const em = el("div", "empty");
-      em.innerHTML = '<h3 style="font-size:15px">Nobody here yet</h3><p>Add the people sharing expenses. You can rename or remove them anytime.</p>';
-      em.style.padding = "22px 20px";
-      li.appendChild(em); list.appendChild(li);
-      return;
+    li.appendChild(body);
+    li.appendChild(el("span","amt",fmt(e.amountCents)));
+    const acts=el("div","row-actions");
+    if(e.type==="expense"){
+      const edit=el("button","x-btn"); edit.title="Edit";
+      edit.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4v16h16v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"></path></svg>';
+      edit.addEventListener("click",()=>openExpense(e.id)); acts.appendChild(edit);
     }
-    for (const p of state.people) {
-      const li = el("li", "person");
-      li.appendChild(avatarNode(p.id));
-
-      const nameWrap = el("div", "pname");
-      const nameTxt = el("span", "name-txt", p.name);
-      nameTxt.title = "Click to rename";
-      nameTxt.addEventListener("click", () => startRename(p.id, nameWrap));
-      nameWrap.appendChild(nameTxt);
-      li.appendChild(nameWrap);
-
-      const c = bal[p.id] || 0;
-      const badge = el("span", "bal-badge " + (c > 0 ? "bal-pos" : c < 0 ? "bal-neg" : "bal-zero"));
-      badge.textContent = c === 0 ? "settled" : fmt(c, true);
-      badge.title = c > 0 ? "Gets back " + fmt(c) : c < 0 ? "Owes " + fmt(-c) : "All settled";
-      li.appendChild(badge);
-
-      const referenced = state.entries.some(e =>
-        (e.type === "expense" && (e.paidBy === p.id || p.id in e.split)) ||
-        (e.type === "settlement" && (e.from === p.id || e.to === p.id)));
-      const x = el("button", "x-btn");
-      x.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-      x.disabled = referenced;
-      x.title = referenced ? "In use by an entry — remove those first" : "Remove " + p.name;
-      x.addEventListener("click", () => { if (!referenced) { state.people = state.people.filter(q => q.id !== p.id); save(); render(); } });
-      li.appendChild(x);
-
-      list.appendChild(li);
-    }
+    const del=el("button","x-btn"); del.title="Delete";
+    del.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+    del.addEventListener("click",()=>{ if(confirm("Delete this entry?")) deleteEntry(e.id); }); acts.appendChild(del);
+    li.appendChild(acts);
+    ul.appendChild(li);
   }
+}
 
-  function startRename(id, wrap) {
-    const p = personById(id); if (!p) return;
-    wrap.innerHTML = "";
-    const input = el("input", "edit-in");
-    input.type = "text"; input.value = p.name; input.maxLength = 30;
-    wrap.appendChild(input);
-    input.focus(); input.select();
-    const commit = () => {
-      const v = input.value.trim();
-      if (v) p.name = v;
-      save(); render();
-    };
-    input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } else if (e.key === "Escape") render(); });
-    input.addEventListener("blur", commit);
+function renderSettle(){
+  const wrap=$("#settleList"); const cnt=$("#settleCount"); wrap.innerHTML="";
+  const tx=simplifyDebts(computeBalances());
+  cnt.textContent = tx.length ? tx.length+(tx.length>1?" payments":" payment") : "";
+  if(state.members.length===0 || state.entries.length===0){
+    const em=el("div","empty"); em.style.padding="22px 10px";
+    em.innerHTML='<h3 style="font-size:15px">Nothing to settle yet</h3><p>Once there are expenses, we\u2019ll suggest the fewest payments to square up.</p>';
+    wrap.appendChild(em); return;
   }
-
-  function splitSummary(e) {
-    const ids = Object.keys(e.split);
-    const n = ids.length;
-    const uniq = new Set(Object.values(e.split));
-    if (n === 0) return "no split";
-    if (uniq.size === 1 && n === state.people.length) return "split evenly, all " + n;
-    if (uniq.size === 1) return "split evenly, " + n + " " + (n === 1 ? "person" : "people");
-    return "custom split, " + n + " " + (n === 1 ? "person" : "people");
+  if(tx.length===0){
+    const em=el("div","empty"); em.style.padding="22px 10px";
+    em.innerHTML='<div class="em-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l3 3 5-6"></path></svg></div><h3 style="font-size:15px">All square</h3><p>Everyone\u2019s even \u2014 no payments needed.</p>';
+    wrap.appendChild(em); return;
   }
-
-  function renderLedger() {
-    const ul = $("#ledger");
-    const empty = $("#ledgerEmpty");
-    ul.innerHTML = "";
-    if (state.entries.length === 0) { empty.style.display = "block"; return; }
-    empty.style.display = "none";
-
-    const sorted = state.entries.slice().sort((a, b) =>
-      (a.date < b.date ? 1 : a.date > b.date ? -1 : 0) || (b.createdAt - a.createdAt));
-
-    for (const e of sorted) {
-      const li = el("li", "entry" + (e.type === "settlement" ? " settlement" : ""));
-      li.appendChild(el("span", "date", fmtDate(e.date)));
-
-      const body = el("div", "body");
-      const desc = el("div", "desc");
-      if (e.type === "expense") {
-        desc.appendChild(document.createTextNode(e.description || "Expense"));
-        body.appendChild(desc);
-        const meta = el("div", "meta");
-        meta.innerHTML = '<span class="payer">' + esc(personName(e.paidBy)) + "</span> paid · " + esc(splitSummary(e));
-        body.appendChild(meta);
-      } else {
-        const tag = el("span", "tag pay", "payment");
-        desc.appendChild(tag);
-        desc.appendChild(document.createTextNode(personName(e.from) + " → " + personName(e.to)));
-        body.appendChild(desc);
-        const meta = el("div", "meta", "Settling up");
-        body.appendChild(meta);
-      }
-      li.appendChild(body);
-
-      const amt = el("span", "amt", (e.type === "settlement" ? fmt(e.amountCents) : fmt(e.amountCents)));
-      li.appendChild(amt);
-
-      const acts = el("div", "row-actions");
-      if (e.type === "expense") {
-        const edit = el("button", "x-btn");
-        edit.title = "Edit"; edit.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4v16h16v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"></path></svg>';
-        edit.addEventListener("click", () => openExpense(e.id));
-        acts.appendChild(edit);
-      }
-      const del = el("button", "x-btn");
-      del.title = "Delete"; del.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
-      del.addEventListener("click", () => { state.entries = state.entries.filter(x => x.id !== e.id); save(); render(); });
-      acts.appendChild(del);
-      li.appendChild(acts);
-
-      ul.appendChild(li);
-    }
+  for(const t of tx){
+    const slip=el("div","slip"); const flow=el("div","slip-flow");
+    const from=el("div","who"); from.appendChild(avatarNode(t.from)); from.appendChild(el("span","nm",memberName(t.from))); flow.appendChild(from);
+    const arrow=el("span","slip-arrow"); arrow.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>'; flow.appendChild(arrow);
+    const to=el("div","who"); to.appendChild(avatarNode(t.to)); to.appendChild(el("span","nm",memberName(t.to))); flow.appendChild(to);
+    slip.appendChild(flow);
+    const topAmt=el("span","slip-amt"); topAmt.textContent=fmt(t.amt); flow.appendChild(topAmt);
+    const foot=el("div","slip-foot");
+    foot.appendChild(el("span","lbl",memberName(t.from)+" pays "+memberName(t.to)));
+    const rec=el("button","btn btn-ghost btn-sm"); rec.textContent="Mark paid";
+    rec.addEventListener("click",()=>openSettlement({from:t.from,to:t.to,amt:t.amt}));
+    foot.appendChild(rec); slip.appendChild(foot);
+    wrap.appendChild(slip);
   }
+}
 
-  function renderSettle() {
-    const wrap = $("#settleList");
-    const cnt = $("#settleCount");
-    wrap.innerHTML = "";
-    const tx = simplifyDebts(computeBalances());
-    cnt.textContent = tx.length ? tx.length + (tx.length > 1 ? " payments" : " payment") : "";
+function renderGroupSwitcher(){
+  const nameEl=$("#groupBtnName"); const dotEl=$(".gb-dot");
+  if(state.group){ nameEl.textContent=state.group.name||"Untitled group"; if(dotEl) dotEl.style.background=groupColor(state.group.id); }
+  else { nameEl.textContent = state.groups.length ? "Select a group" : "No group"; if(dotEl) dotEl.style.background="var(--faint)"; }
+  if($(".group-switch").classList.contains("open")) buildGroupMenu();
+}
+function buildGroupMenu(){
+  const m=$("#groupMenu"); m.innerHTML="";
+  m.appendChild(el("div","gm-cap","Your groups"));
+  if(state.groups.length===0){ const e=el("div","gm-cap"); e.style.color="var(--soft)"; e.textContent="None yet \u2014 create one below."; m.appendChild(e); }
+  state.groups.forEach(g=>{
+    const active = state.group && g.id===state.group.id;
+    const b=el("button","gm-item"+(active?" active":""));
+    const dot=el("span","gm-dot"); dot.style.background=groupColor(g.id); b.appendChild(dot);
+    const nm=el("span","gm-name"); nm.appendChild(el("span",null,g.name||"Untitled group")); b.appendChild(nm);
+    if(active){ const ck=el("span","gm-check"); ck.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'; b.appendChild(ck); }
+    b.addEventListener("click",()=>{ if(!active){ closeGroupMenu(); openGroup(g.id); } else closeGroupMenu(); });
+    m.appendChild(b);
+  });
+  m.appendChild(el("div","gm-div"));
+  const nb=el("button","gm-item gm-new");
+  nb.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span>New group</span>';
+  nb.addEventListener("click",(e)=>{ e.stopPropagation(); showNewGroupForm(); });
+  m.appendChild(nb);
+}
+function showNewGroupForm(){
+  buildGroupMenu();
+  const m=$("#groupMenu"); const last=m.lastElementChild;
+  const form=el("div","gm-newform");
+  const inp=el("input"); inp.type="text"; inp.placeholder="Group name\u2026"; inp.maxLength=60;
+  const create=el("button","btn btn-primary btn-sm"); create.textContent="Create";
+  const commit=()=>createGroup(inp.value,"$");
+  create.addEventListener("click",(e)=>{ e.stopPropagation(); commit(); });
+  inp.addEventListener("click",(e)=>e.stopPropagation());
+  inp.addEventListener("keydown",(e)=>{ e.stopPropagation(); if(e.key==="Enter"){e.preventDefault();commit();} else if(e.key==="Escape") buildGroupMenu(); });
+  form.appendChild(inp); form.appendChild(create); m.replaceChild(form,last); inp.focus();
+}
+function closeGroupMenu(){ const gs=$(".group-switch"); if(gs) gs.classList.remove("open"); const gb=$("#groupBtn"); if(gb) gb.setAttribute("aria-expanded","false"); }
 
-    if (state.people.length === 0 || state.entries.length === 0) {
-      const em = el("div", "empty"); em.style.padding = "22px 10px";
-      em.innerHTML = '<h3 style="font-size:15px">Nothing to settle yet</h3><p>Once there are expenses, we\u2019ll suggest the fewest payments to square up.</p>';
-      wrap.appendChild(em); return;
-    }
-    if (tx.length === 0) {
-      const em = el("div", "empty"); em.style.padding = "22px 10px";
-      em.innerHTML = '<div class="em-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l3 3 5-6"></path></svg></div><h3 style="font-size:15px">All square</h3><p>Everyone\u2019s even — no payments needed.</p>';
-      wrap.appendChild(em); return;
-    }
-
-    for (const t of tx) {
-      const slip = el("div", "slip");
-      const flow = el("div", "slip-flow");
-      const from = el("div", "who");
-      from.appendChild(avatarNode(t.from));
-      from.appendChild(el("span", "nm", personName(t.from)));
-      flow.appendChild(from);
-
-      const arrow = el("span", "slip-arrow");
-      arrow.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
-      flow.appendChild(arrow);
-
-      const to = el("div", "who");
-      to.appendChild(avatarNode(t.to));
-      to.appendChild(el("span", "nm", personName(t.to)));
-      flow.appendChild(to);
-      slip.appendChild(flow);
-
-      const topAmt = el("span", "slip-amt");
-      topAmt.textContent = fmt(t.amt);
-      flow.appendChild(topAmt);
-
-      const foot = el("div", "slip-foot");
-      const lbl = el("span", "lbl", personName(t.from) + " pays " + personName(t.to));
-      const rec = el("button", "btn btn-ghost btn-sm");
-      rec.textContent = "Mark paid";
-      rec.addEventListener("click", () => openSettlement({ from: t.from, to: t.to, amt: t.amt }));
-      foot.appendChild(lbl);
-      foot.appendChild(rec);
-      slip.appendChild(foot);
-
-      wrap.appendChild(slip);
-    }
+function openExpense(editId){
+  if(state.members.length===0){ toast("Add someone first."); return; }
+  const editing = editId ? state.entries.find(e=>e.id===editId) : null;
+  if(editing){
+    ef={ editingId:editId, description:editing.description||"", paidBy:editing.paidBy, method:editing.splitMethod||"equal", amountCents:editing.amountCents, date:editing.date, selected:new Set(Object.keys(editing.split)), exact:Object.assign({},editing.split), shares:Object.assign({},editing.shareCounts||{}) };
+    state.members.forEach(m=>{ if(!(m.id in ef.shares)) ef.shares[m.id]=1; });
+    $("#expTitle").textContent="Edit expense"; $("#expSave").textContent="Save changes";
+  } else {
+    ef={ editingId:null, description:"", paidBy:(myMember()?myMember().id:state.members[0].id), method:"equal", amountCents:0, date:todayISO(), selected:new Set(state.members.map(m=>m.id)), exact:{}, shares:{} };
+    state.members.forEach(m=>{ ef.exact[m.id]=0; ef.shares[m.id]=1; });
+    $("#expTitle").textContent="Add expense"; $("#expSave").textContent="Save expense";
   }
+  buildExpenseBody(); openScrim("#expenseScrim");
+  setTimeout(()=>{ const d=$("#efDesc"); if(d) d.focus(); },60);
+}
+function buildExpenseBody(){
+  const b=$("#expenseBody"); b.innerHTML="";
+  const fDesc=el("div","field"); fDesc.innerHTML='<label for="efDesc">What was it for?</label>';
+  const inDesc=el("input"); inDesc.type="text"; inDesc.id="efDesc"; inDesc.placeholder="Dinner, groceries, cab\u2026"; inDesc.maxLength=60; inDesc.value=ef.description;
+  inDesc.addEventListener("input",()=>ef.description=inDesc.value); fDesc.appendChild(inDesc); b.appendChild(fDesc);
 
-  // ---------------------------------------------------------------- expense modal
-  function openExpense(editId) {
-    const editing = editId ? state.entries.find(e => e.id === editId) : null;
-    if (state.people.length === 0) return;
-    if (editing) {
-      ef = {
-        editingId: editId,
-        description: editing.description || "",
-        paidBy: editing.paidBy,
-        method: editing.splitMethod || "equal",
-        amountCents: editing.amountCents,
-        date: editing.date,
-        selected: new Set(Object.keys(editing.split)),
-        exact: Object.assign({}, editing.split),
-        shares: Object.assign({}, editing.shareCounts || {}),
-      };
-      state.people.forEach(p => { if (!(p.id in ef.shares)) ef.shares[p.id] = ef.selected.has(p.id) ? 1 : 1; });
-      $("#expTitle").textContent = "Edit expense";
-      $("#expSave").textContent = "Save changes";
-    } else {
-      ef = {
-        editingId: null, description: "", paidBy: state.people[0].id, method: "equal",
-        amountCents: 0, date: todayISO(),
-        selected: new Set(state.people.map(p => p.id)),
-        exact: {}, shares: {},
-      };
-      state.people.forEach(p => { ef.exact[p.id] = 0; ef.shares[p.id] = 1; });
-      $("#expTitle").textContent = "Add expense";
-      $("#expSave").textContent = "Save expense";
-    }
-    buildExpenseBody();
-    openScrim("#expenseScrim");
-    setTimeout(() => { const d = $("#efDesc"); if (d) d.focus(); }, 60);
+  const fPaid=el("div","field"); fPaid.innerHTML='<label for="efPaid">Paid by</label>';
+  const sel=el("select"); sel.id="efPaid";
+  state.members.forEach(m=>{ const o=el("option",null,m.name); o.value=m.id; if(m.id===ef.paidBy) o.selected=true; sel.appendChild(o); });
+  sel.addEventListener("change",()=>ef.paidBy=sel.value); fPaid.appendChild(sel); b.appendChild(fPaid);
+
+  const fAmt=el("div","field"); fAmt.innerHTML='<label>Amount</label>';
+  const amtHolder=el("div"); amtHolder.id="efAmtHolder"; fAmt.appendChild(amtHolder); b.appendChild(fAmt);
+
+  const fMethod=el("div","field"); fMethod.innerHTML='<label>Split</label>';
+  const seg=el("div","seg");
+  [["equal","Equally"],["exact","By amount"],["shares","By shares"]].forEach(pair=>{
+    const k=pair[0], lab=pair[1];
+    const btn=el("button", ef.method===k?"on":"", lab); btn.type="button";
+    btn.addEventListener("click",()=>{ ef.method=k; buildAmountRow(); buildParticipants(); refreshPreview(); syncSeg(seg,k); });
+    seg.appendChild(btn);
+  });
+  fMethod.appendChild(seg); b.appendChild(fMethod);
+
+  const fPart=el("div","field"); fPart.style.marginBottom="4px"; fPart.innerHTML='<label id="partLabel">Split between</label>';
+  const partList=el("div","part-list"); partList.id="efParts"; fPart.appendChild(partList); b.appendChild(fPart);
+
+  const fDate=el("div","field"); fDate.style.marginTop="15px"; fDate.innerHTML='<label for="efDate">Date</label>';
+  const inDate=el("input"); inDate.type="date"; inDate.id="efDate"; inDate.value=ef.date;
+  inDate.addEventListener("change",()=>ef.date=inDate.value||todayISO()); fDate.appendChild(inDate); b.appendChild(fDate);
+
+  buildAmountRow(); buildParticipants(); refreshPreview();
+}
+function syncSeg(seg,k){ const order=["equal","exact","shares"]; Array.from(seg.children).forEach((c,i)=>c.classList.toggle("on",order[i]===k)); }
+function buildAmountRow(){
+  const holder=$("#efAmtHolder"); holder.innerHTML="";
+  if(ef.method==="exact"){
+    const read=el("div","amount-in read");
+    read.innerHTML='<span class="rv" id="efTotalView">'+fmt(ef.amountCents)+'</span><span class="rl">sum of amounts below</span>';
+    holder.appendChild(read);
+  } else {
+    const wrap=el("div","amount-in"); wrap.innerHTML='<span class="cur-sym">'+esc(cur())+'</span>';
+    const inp=el("input"); inp.type="text"; inp.inputMode="decimal"; inp.id="efAmt"; inp.placeholder="0.00";
+    inp.value=ef.amountCents?(ef.amountCents/100).toFixed(2):"";
+    inp.addEventListener("input",()=>{ ef.amountCents=parseMoney(inp.value); refreshPreview(); });
+    wrap.appendChild(inp); holder.appendChild(wrap);
   }
-
-  function buildExpenseBody() {
-    const b = $("#expenseBody");
-    b.innerHTML = "";
-
-    // Description
-    const fDesc = el("div", "field");
-    fDesc.innerHTML = '<label for="efDesc">What was it for?</label>';
-    const inDesc = el("input"); inDesc.type = "text"; inDesc.id = "efDesc"; inDesc.placeholder = "Dinner, groceries, cab…"; inDesc.maxLength = 60; inDesc.value = ef.description;
-    inDesc.addEventListener("input", () => ef.description = inDesc.value);
-    fDesc.appendChild(inDesc); b.appendChild(fDesc);
-
-    // Paid by
-    const fPaid = el("div", "field");
-    fPaid.innerHTML = '<label for="efPaid">Paid by</label>';
-    const sel = el("select"); sel.id = "efPaid";
-    state.people.forEach(p => { const o = el("option", null, p.name); o.value = p.id; if (p.id === ef.paidBy) o.selected = true; sel.appendChild(o); });
-    sel.addEventListener("change", () => ef.paidBy = sel.value);
-    fPaid.appendChild(sel); b.appendChild(fPaid);
-
-    // Amount (editable for equal/shares, computed for exact)
-    const fAmt = el("div", "field");
-    fAmt.innerHTML = '<label>Amount</label>';
-    const amtHolder = el("div"); amtHolder.id = "efAmtHolder";
-    fAmt.appendChild(amtHolder); b.appendChild(fAmt);
-
-    // Split method
-    const fMethod = el("div", "field");
-    fMethod.innerHTML = '<label>Split</label>';
-    const seg = el("div", "seg");
-    [["equal", "Equally"], ["exact", "By amount"], ["shares", "By shares"]].forEach(([k, lab]) => {
-      const btn = el("button", ef.method === k ? "on" : "", lab);
-      btn.type = "button";
-      btn.addEventListener("click", () => { ef.method = k; buildAmountRow(); buildParticipants(); refreshPreview(); syncSeg(seg, k); });
-      seg.appendChild(btn);
-    });
-    fMethod.appendChild(seg); b.appendChild(fMethod);
-
-    // Participants
-    const fPart = el("div", "field"); fPart.style.marginBottom = "4px";
-    fPart.innerHTML = '<label id="partLabel">Split between</label>';
-    const partList = el("div", "part-list"); partList.id = "efParts";
-    fPart.appendChild(partList); b.appendChild(fPart);
-
-    // Date
-    const fDate = el("div", "field"); fDate.style.marginTop = "15px";
-    fDate.innerHTML = '<label for="efDate">Date</label>';
-    const inDate = el("input"); inDate.type = "date"; inDate.id = "efDate"; inDate.value = ef.date;
-    inDate.addEventListener("change", () => ef.date = inDate.value || todayISO());
-    fDate.appendChild(inDate); b.appendChild(fDate);
-
-    buildAmountRow();
-    buildParticipants();
-    refreshPreview();
-  }
-
-  function syncSeg(seg, k) {
-    Array.from(seg.children).forEach((c, i) => c.classList.toggle("on", [["equal"], ["exact"], ["shares"]][i][0] === k));
-  }
-
-  function buildAmountRow() {
-    const holder = $("#efAmtHolder");
-    holder.innerHTML = "";
-    if (ef.method === "exact") {
-      const read = el("div", "amount-in read");
-      read.innerHTML = '<span class="rv" id="efTotalView">' + fmt(ef.amountCents) + '</span><span class="rl">sum of amounts below</span>';
-      holder.appendChild(read);
-    } else {
-      const wrap = el("div", "amount-in");
-      wrap.innerHTML = '<span class="cur-sym">' + esc(state.currency) + "</span>";
-      const inp = el("input"); inp.type = "text"; inp.inputMode = "decimal"; inp.id = "efAmt";
-      inp.placeholder = "0.00";
-      inp.value = ef.amountCents ? (ef.amountCents / 100).toFixed(2) : "";
-      inp.addEventListener("input", () => { ef.amountCents = parseMoney(inp.value); refreshPreview(); });
-      wrap.appendChild(inp); holder.appendChild(wrap);
-    }
-  }
-
-  function buildParticipants() {
-    const list = $("#efParts");
-    list.innerHTML = "";
-    const label = $("#partLabel");
-    if (label) label.textContent = ef.method === "exact" ? "Enter each share" : ef.method === "shares" ? "Assign shares" : "Split between";
-
-    state.people.forEach(p => {
-      const on = ef.selected.has(p.id);
-      const row = el("div", "part" + (on ? "" : " off"));
-
-      const chk = el("div", "chk" + (on ? " on" : ""));
-      chk.setAttribute("role", "checkbox"); chk.setAttribute("aria-checked", on ? "true" : "false"); chk.tabIndex = 0;
-      chk.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-      const toggle = () => {
-        if (ef.selected.has(p.id)) ef.selected.delete(p.id); else ef.selected.add(p.id);
-        buildParticipants(); refreshPreview();
-      };
-      chk.addEventListener("click", toggle);
-      chk.addEventListener("keydown", (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggle(); } });
-      row.appendChild(chk);
-
-      const av = avatarNode(p.id); av.style.width = "26px"; av.style.height = "26px"; row.appendChild(av);
-      row.appendChild(el("span", "pn", p.name));
-
-      if (on) {
-        if (ef.method === "equal") {
-          const v = el("span", "share-view"); v.dataset.pid = p.id; row.appendChild(v);
-        } else if (ef.method === "exact") {
-          const box = el("div", "exact-in");
-          const inp = el("input"); inp.type = "text"; inp.inputMode = "decimal";
-          inp.value = ef.exact[p.id] ? (ef.exact[p.id] / 100).toFixed(2) : "";
-          inp.placeholder = "0.00";
-          inp.addEventListener("input", () => {
-            ef.exact[p.id] = parseMoney(inp.value);
-            ef.amountCents = state.people.filter(q => ef.selected.has(q.id)).reduce((s, q) => s + (ef.exact[q.id] || 0), 0);
-            const tv = $("#efTotalView"); if (tv) tv.textContent = fmt(ef.amountCents);
-            refreshPreview();
-          });
-          box.appendChild(inp); row.appendChild(box);
-        } else if (ef.method === "shares") {
-          const st = el("div", "stepper");
-          const minus = el("button", null, "−"); minus.type = "button";
-          const sv = el("span", "sv"); sv.textContent = ef.shares[p.id] || 1;
-          const plus = el("button", null, "+"); plus.type = "button";
-          minus.addEventListener("click", () => { ef.shares[p.id] = Math.max(1, (ef.shares[p.id] || 1) - 1); sv.textContent = ef.shares[p.id]; refreshPreview(); });
-          plus.addEventListener("click", () => { ef.shares[p.id] = (ef.shares[p.id] || 1) + 1; sv.textContent = ef.shares[p.id]; refreshPreview(); });
-          st.appendChild(minus); st.appendChild(sv); st.appendChild(plus); row.appendChild(st);
-          const v = el("span", "share-view"); v.dataset.pid = p.id; v.style.width = "72px"; v.style.textAlign = "right"; row.appendChild(v);
-        }
-      }
-      list.appendChild(row);
-    });
-  }
-
-  function currentSplit() {
-    const ids = state.people.filter(p => ef.selected.has(p.id)).map(p => p.id);
-    if (ids.length === 0) return {};
-    if (ef.method === "equal") return equalSplit(ef.amountCents, ids);
-    if (ef.method === "exact") { const o = {}; ids.forEach(id => { if ((ef.exact[id] || 0) > 0) o[id] = ef.exact[id]; }); return o; }
-    if (ef.method === "shares") { const sm = {}; ids.forEach(id => sm[id] = ef.shares[id] || 1); return sharesSplit(ef.amountCents, sm); }
-    return {};
-  }
-
-  function refreshPreview() {
-    const split = currentSplit();
-    // update per-person share views
-    document.querySelectorAll("#efParts .share-view").forEach(node => {
-      const pid = node.dataset.pid;
-      node.textContent = fmt(split[pid] || 0);
-    });
-    // validity
-    const selCount = ef.selected.size;
-    let valid = false, note = "";
-    if (selCount === 0) { note = "Pick at least one person"; }
-    else if (ef.method === "exact") {
-      if (ef.amountCents <= 0) note = "Enter amounts above";
-      else { valid = true; note = "Total " + fmt(ef.amountCents); }
-    } else {
-      if (ef.amountCents <= 0) note = "Enter an amount";
-      else {
-        const assigned = Object.values(split).reduce((s, c) => s + c, 0);
-        valid = true;
-        note = fmt(ef.amountCents) + " ÷ " + selCount + (ef.method === "shares" ? " by shares" : "");
-        if (assigned !== ef.amountCents) note = "Adjust — doesn't total";  // safety; rounding keeps equal
+}
+function buildParticipants(){
+  const list=$("#efParts"); list.innerHTML="";
+  const label=$("#partLabel"); if(label) label.textContent = ef.method==="exact"?"Enter each share":ef.method==="shares"?"Assign shares":"Split between";
+  state.members.forEach(m=>{
+    const on=ef.selected.has(m.id);
+    const row=el("div","part"+(on?"":" off"));
+    const chk=el("div","chk"+(on?" on":"")); chk.setAttribute("role","checkbox"); chk.setAttribute("aria-checked",on?"true":"false"); chk.tabIndex=0;
+    chk.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    const toggle=()=>{ if(ef.selected.has(m.id)) ef.selected.delete(m.id); else ef.selected.add(m.id); buildParticipants(); refreshPreview(); };
+    chk.addEventListener("click",toggle);
+    chk.addEventListener("keydown",(e)=>{ if(e.key===" "||e.key==="Enter"){e.preventDefault();toggle();} });
+    row.appendChild(chk);
+    const av=avatarNode(m.id); av.style.width="26px"; av.style.height="26px"; row.appendChild(av);
+    row.appendChild(el("span","pn",m.name));
+    if(on){
+      if(ef.method==="equal"){ const v=el("span","share-view"); v.dataset.pid=m.id; row.appendChild(v); }
+      else if(ef.method==="exact"){
+        const box=el("div","exact-in"); const inp=el("input"); inp.type="text"; inp.inputMode="decimal";
+        inp.value=ef.exact[m.id]?(ef.exact[m.id]/100).toFixed(2):""; inp.placeholder="0.00";
+        inp.addEventListener("input",()=>{ ef.exact[m.id]=parseMoney(inp.value); ef.amountCents=state.members.filter(q=>ef.selected.has(q.id)).reduce((s,q)=>s+(ef.exact[q.id]||0),0); const tv=$("#efTotalView"); if(tv) tv.textContent=fmt(ef.amountCents); refreshPreview(); });
+        box.appendChild(inp); row.appendChild(box);
+      } else if(ef.method==="shares"){
+        const st=el("div","stepper");
+        const minus=el("button",null,"\u2212"); minus.type="button";
+        const sv=el("span","sv"); sv.textContent=ef.shares[m.id]||1;
+        const plus=el("button",null,"+"); plus.type="button";
+        minus.addEventListener("click",()=>{ ef.shares[m.id]=Math.max(1,(ef.shares[m.id]||1)-1); sv.textContent=ef.shares[m.id]; refreshPreview(); });
+        plus.addEventListener("click",()=>{ ef.shares[m.id]=(ef.shares[m.id]||1)+1; sv.textContent=ef.shares[m.id]; refreshPreview(); });
+        st.appendChild(minus); st.appendChild(sv); st.appendChild(plus); row.appendChild(st);
+        const v=el("span","share-view"); v.dataset.pid=m.id; v.style.width="72px"; v.style.textAlign="right"; row.appendChild(v);
       }
     }
-    const noteEl = $("#expNote");
-    noteEl.textContent = note;
-    noteEl.classList.toggle("bad", !valid && selCount > 0 && ef.amountCents > 0);
-    $("#expSave").disabled = !valid;
-  }
-
-  function saveExpense() {
-    const split = currentSplit();
-    const amountCents = ef.method === "exact"
-      ? Object.values(split).reduce((s, c) => s + c, 0)
-      : ef.amountCents;
-    if (amountCents <= 0 || Object.keys(split).length === 0) return;
-    const entry = {
-      id: ef.editingId || uid("e_"),
-      type: "expense",
-      description: ef.description.trim(),
-      amountCents,
-      paidBy: ef.paidBy,
-      split,
-      splitMethod: ef.method,
-      shareCounts: ef.method === "shares" ? Object.fromEntries(Object.keys(split).map(id => [id, ef.shares[id] || 1])) : undefined,
-      date: ef.date || todayISO(),
-      createdAt: ef.editingId ? (state.entries.find(e => e.id === ef.editingId)?.createdAt || Date.now()) : Date.now(),
-    };
-    if (ef.editingId) state.entries = state.entries.map(e => e.id === ef.editingId ? entry : e);
-    else state.entries.push(entry);
-    save(); render(); closeScrim("#expenseScrim");
-  }
-
-  // ---------------------------------------------------------------- settlement modal
-  function openSettlement(prefill) {
-    if (state.people.length < 1) return;
-    const people = state.people;
-    sf = {
-      from: prefill && prefill.from ? prefill.from : people[0].id,
-      to: prefill && prefill.to ? prefill.to : (people[1] ? people[1].id : people[0].id),
-      amountCents: prefill && prefill.amt ? prefill.amt : 0,
-      date: todayISO(),
-    };
-    buildSettleBody();
-    openScrim("#settleScrim");
-  }
-
-  function buildSettleBody() {
-    const b = $("#settleBody");
-    b.innerHTML = "";
-
-    const mkSelect = (id, val, label, onChange) => {
-      const f = el("div", "field");
-      f.innerHTML = '<label for="' + id + '">' + label + "</label>";
-      const s = el("select"); s.id = id;
-      state.people.forEach(p => { const o = el("option", null, p.name); o.value = p.id; if (p.id === val) o.selected = true; s.appendChild(o); });
-      s.addEventListener("change", () => { onChange(s.value); validateSettle(); });
-      f.appendChild(s); return f;
-    };
-    b.appendChild(mkSelect("sfFrom", sf.from, "Who paid", v => sf.from = v));
-    b.appendChild(mkSelect("sfTo", sf.to, "Paid to", v => sf.to = v));
-
-    const fAmt = el("div", "field");
-    fAmt.innerHTML = '<label for="sfAmt">Amount</label>';
-    const wrap = el("div", "amount-in");
-    wrap.innerHTML = '<span class="cur-sym">' + esc(state.currency) + "</span>";
-    const inp = el("input"); inp.type = "text"; inp.inputMode = "decimal"; inp.id = "sfAmt";
-    inp.placeholder = "0.00"; inp.value = sf.amountCents ? (sf.amountCents / 100).toFixed(2) : "";
-    inp.addEventListener("input", () => { sf.amountCents = parseMoney(inp.value); validateSettle(); });
-    wrap.appendChild(inp); fAmt.appendChild(wrap); b.appendChild(fAmt);
-
-    const fDate = el("div", "field");
-    fDate.innerHTML = '<label for="sfDate">Date</label>';
-    const d = el("input"); d.type = "date"; d.id = "sfDate"; d.value = sf.date;
-    d.addEventListener("change", () => sf.date = d.value || todayISO());
-    fDate.appendChild(d); b.appendChild(fDate);
-
-    const hint = el("div"); hint.id = "sfHint";
-    hint.style.cssText = "font-size:12.5px;color:var(--soft);margin-top:2px";
-    b.appendChild(hint);
-
-    validateSettle();
-  }
-
-  function validateSettle() {
-    const ok = sf.from !== sf.to && sf.amountCents > 0;
-    $("#setSave").disabled = !ok;
-    const hint = $("#sfHint");
-    if (sf.from === sf.to) hint.textContent = "Pick two different people.";
-    else if (sf.amountCents > 0) hint.textContent = personName(sf.from) + " pays " + personName(sf.to) + " " + fmt(sf.amountCents) + ".";
-    else hint.textContent = "";
-  }
-
-  function saveSettlement() {
-    if (sf.from === sf.to || sf.amountCents <= 0) return;
-    state.entries.push({
-      id: uid("e_"), type: "settlement", from: sf.from, to: sf.to,
-      amountCents: sf.amountCents, date: sf.date || todayISO(), createdAt: Date.now(),
-    });
-    save(); render(); closeScrim("#settleScrim");
-  }
-
-  // ---------------------------------------------------------------- settings
-  const CURRENCIES = ["$", "€", "£", "¥", "₹", "₩", "₽", "R$", "A$", "C$", "kr", "₺"];
-  function buildCurrencyGrid() {
-    const g = $("#curGrid"); g.innerHTML = "";
-    CURRENCIES.forEach(c => {
-      const b = el("button", state.currency === c ? "on" : "", c);
-      b.addEventListener("click", () => { state.currency = c; buildCurrencyGrid(); save(); render(); });
-      g.appendChild(b);
-    });
-  }
-  function exportData() {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = (state.groupName || "tally").replace(/[^\w-]+/g, "-").toLowerCase() + "-ledger.json";
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  // ---------------------------------------------------------------- modal plumbing
-  function openScrim(sel) { const s = $(sel); s.classList.add("open"); document.body.style.overflow = "hidden"; }
-  function closeScrim(sel) { const s = $(sel); s.classList.remove("open"); document.body.style.overflow = ""; }
-  document.querySelectorAll(".scrim").forEach(scrim => {
-    scrim.addEventListener("mousedown", (e) => { if (e.target === scrim) closeScrim("#" + scrim.id); });
+    list.appendChild(row);
   });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { document.querySelectorAll(".scrim.open").forEach(s => closeScrim("#" + s.id)); }
-  });
-  document.querySelectorAll("[data-close-expense]").forEach(b => b.addEventListener("click", () => closeScrim("#expenseScrim")));
-  document.querySelectorAll("[data-close-settle]").forEach(b => b.addEventListener("click", () => closeScrim("#settleScrim")));
-  document.querySelectorAll("[data-close-settings]").forEach(b => b.addEventListener("click", () => closeScrim("#settingsScrim")));
+}
+function currentSplit(){
+  const ids=state.members.filter(m=>ef.selected.has(m.id)).map(m=>m.id);
+  if(ids.length===0) return {};
+  if(ef.method==="equal") return equalSplit(ef.amountCents, ids);
+  if(ef.method==="exact"){ const o={}; ids.forEach(id=>{ if((ef.exact[id]||0)>0) o[id]=ef.exact[id]; }); return o; }
+  if(ef.method==="shares"){ const sm={}; ids.forEach(id=>sm[id]=ef.shares[id]||1); return sharesSplit(ef.amountCents, sm); }
+  return {};
+}
+function refreshPreview(){
+  const split=currentSplit();
+  document.querySelectorAll("#efParts .share-view").forEach(node=>{ const pid=node.dataset.pid; node.textContent=fmt(split[pid]||0); });
+  const selCount=ef.selected.size; let valid=false, note="";
+  if(selCount===0){ note="Pick at least one person"; }
+  else if(ef.method==="exact"){ if(ef.amountCents<=0) note="Enter amounts above"; else { valid=true; note="Total "+fmt(ef.amountCents); } }
+  else { if(ef.amountCents<=0) note="Enter an amount"; else { valid=true; note=fmt(ef.amountCents)+" \u00f7 "+selCount+(ef.method==="shares"?" by shares":""); } }
+  const noteEl=$("#expNote"); noteEl.textContent=note; noteEl.classList.toggle("bad", !valid && selCount>0 && ef.amountCents>0);
+  $("#expSave").disabled=!valid;
+}
+async function saveExpense(){
+  const split=currentSplit();
+  const amountCents = ef.method==="exact" ? Object.values(split).reduce((s,c)=>s+c,0) : ef.amountCents;
+  if(amountCents<=0 || Object.keys(split).length===0) return;
+  const entry={ description:ef.description.trim(), amountCents, paidBy:ef.paidBy, split, splitMethod:ef.method, shareCounts: ef.method==="shares"?Object.fromEntries(Object.keys(split).map(id=>[id, ef.shares[id]||1])):null, date:ef.date||todayISO() };
+  $("#expSave").disabled=true;
+  const ok = ef.editingId ? await updateExpense(ef.editingId, entry) : await addExpense(entry);
+  if(ok) closeScrim("#expenseScrim"); else $("#expSave").disabled=false;
+}
 
-  // ---------------------------------------------------------------- events
-  function addPerson() {
-    const inp = $("#personInput");
-    const name = inp.value.trim();
-    if (!name) return;
-    state.people.push({ id: uid("p_"), name });
-    inp.value = ""; inp.focus();
-    save(); render();
+function openSettlement(prefill){
+  if(state.members.length<1){ toast("Add someone first."); return; }
+  const ppl=state.members;
+  sf={ from: prefill&&prefill.from?prefill.from:(myMember()?myMember().id:ppl[0].id), to: prefill&&prefill.to?prefill.to:(ppl[1]?ppl[1].id:ppl[0].id), amountCents: prefill&&prefill.amt?prefill.amt:0, date:todayISO() };
+  buildSettleBody(); openScrim("#settleScrim");
+}
+function buildSettleBody(){
+  const b=$("#settleBody"); b.innerHTML="";
+  const mkSelect=(id,val,label,onChange)=>{
+    const f=el("div","field"); f.innerHTML='<label for="'+id+'">'+label+'</label>';
+    const s=el("select"); s.id=id;
+    state.members.forEach(m=>{ const o=el("option",null,m.name); o.value=m.id; if(m.id===val) o.selected=true; s.appendChild(o); });
+    s.addEventListener("change",()=>{ onChange(s.value); validateSettle(); });
+    f.appendChild(s); return f;
+  };
+  b.appendChild(mkSelect("sfFrom", sf.from, "Who paid", v=>sf.from=v));
+  b.appendChild(mkSelect("sfTo", sf.to, "Paid to", v=>sf.to=v));
+  const fAmt=el("div","field"); fAmt.innerHTML='<label for="sfAmt">Amount</label>';
+  const wrap=el("div","amount-in"); wrap.innerHTML='<span class="cur-sym">'+esc(cur())+'</span>';
+  const inp=el("input"); inp.type="text"; inp.inputMode="decimal"; inp.id="sfAmt"; inp.placeholder="0.00"; inp.value=sf.amountCents?(sf.amountCents/100).toFixed(2):"";
+  inp.addEventListener("input",()=>{ sf.amountCents=parseMoney(inp.value); validateSettle(); });
+  wrap.appendChild(inp); fAmt.appendChild(wrap); b.appendChild(fAmt);
+  const fDate=el("div","field"); fDate.innerHTML='<label for="sfDate">Date</label>';
+  const d=el("input"); d.type="date"; d.id="sfDate"; d.value=sf.date; d.addEventListener("change",()=>sf.date=d.value||todayISO());
+  fDate.appendChild(d); b.appendChild(fDate);
+  const hint=el("div"); hint.id="sfHint"; hint.style.cssText="font-size:12.5px;color:var(--soft);margin-top:2px"; b.appendChild(hint);
+  validateSettle();
+}
+function validateSettle(){
+  const ok = sf.from!==sf.to && sf.amountCents>0;
+  $("#setSave").disabled=!ok;
+  const hint=$("#sfHint");
+  if(sf.from===sf.to) hint.textContent="Pick two different people.";
+  else if(sf.amountCents>0) hint.textContent=memberName(sf.from)+" pays "+memberName(sf.to)+" "+fmt(sf.amountCents)+".";
+  else hint.textContent="";
+}
+async function saveSettlement(){
+  if(sf.from===sf.to || sf.amountCents<=0) return;
+  $("#setSave").disabled=true;
+  const ok=await addSettlement({ from:sf.from, to:sf.to, amountCents:sf.amountCents, date:sf.date||todayISO() });
+  if(ok) closeScrim("#settleScrim"); else $("#setSave").disabled=false;
+}
+
+const CURRENCIES=["$","\u20ac","\u00a3","\u00a5","\u20b9","\u20a9","\u20bd","R$","A$","C$","kr","\u20ba"];
+function buildCurrencyGrid(){
+  const g=$("#curGrid"); g.innerHTML="";
+  CURRENCIES.forEach(c=>{ const b=el("button", cur()===c?"on":"", c); b.addEventListener("click",()=>setCurrency(c)); g.appendChild(b); });
+}
+function openSettings(){
+  const disp=myDisplay();
+  const nm = disp && disp.includes("@") ? disp.split("@")[0] : (myMember()?myMember().name:"You");
+  $("#acctName").textContent=nm; $("#acctId").textContent=disp; $("#acctAvatar").textContent=initials(nm);
+  const hasGroup=!!state.group;
+  $("#groupSettings").style.display=hasGroup?"block":"none";
+  $("#currencySettings").style.display=hasGroup?"block":"none";
+  if(hasGroup){
+    $("#groupRename").value=state.group.name||"";
+    $("#inviteLink").value=inviteLink();
+    const isOwner = state.group.created_by===myUserId();
+    $("#delGroupBtn").style.display = isOwner?"":"none";
+    buildCurrencyGrid();
   }
-  $("#addPersonBtn").addEventListener("click", addPerson);
-  $("#personInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addPerson(); } });
+  openScrim("#settingsScrim");
+}
 
-  $("#addExpenseBtn").addEventListener("click", () => {
-    if (state.people.length === 0) { $("#personInput").focus(); return; }
-    openExpense(null);
-  });
-  $("#fabAdd").addEventListener("click", () => {
-    if (state.people.length === 0) { $("#personInput").focus(); return; }
-    openExpense(null);
-  });
-  $("#expSave").addEventListener("click", saveExpense);
-  $("#setSave").addEventListener("click", saveSettlement);
+function openScrim(sel){ $(sel).classList.add("open"); document.body.style.overflow="hidden"; }
+function closeScrim(sel){ $(sel).classList.remove("open"); document.body.style.overflow=""; }
+document.querySelectorAll(".scrim").forEach(scrim=>{ scrim.addEventListener("mousedown",(e)=>{ if(e.target===scrim) closeScrim("#"+scrim.id); }); });
+document.addEventListener("keydown",(e)=>{ if(e.key==="Escape"){ document.querySelectorAll(".scrim.open").forEach(s=>closeScrim("#"+s.id)); closeGroupMenu(); } });
+document.querySelectorAll("[data-close-expense]").forEach(b=>b.addEventListener("click",()=>closeScrim("#expenseScrim")));
+document.querySelectorAll("[data-close-settle]").forEach(b=>b.addEventListener("click",()=>closeScrim("#settleScrim")));
+document.querySelectorAll("[data-close-settings]").forEach(b=>b.addEventListener("click",()=>closeScrim("#settingsScrim")));
 
-  $("#settingsBtn").addEventListener("click", () => { buildCurrencyGrid(); openScrim("#settingsScrim"); });
-  $("#exportBtn").addEventListener("click", exportData);
-  $("#resetBtn").addEventListener("click", () => {
-    if (confirm("Reset everything? This removes all people and entries and can't be undone.")) {
-      state.people = []; state.entries = [];
-      save(); render(); closeScrim("#settingsScrim");
+function addPersonFromInputs(){
+  const name=$("#personInput").value; const contact=$("#personContact").value;
+  if(!name.trim()) return;
+  addMember(name, contact);
+  $("#personInput").value=""; $("#personContact").value=""; $("#personInput").focus();
+}
+$("#addPersonBtn").addEventListener("click", addPersonFromInputs);
+$("#personInput").addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); addPersonFromInputs(); } });
+$("#personContact").addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); addPersonFromInputs(); } });
+
+$("#addExpenseBtn").addEventListener("click",()=>{ if(state.members.length===0){ $("#personInput").focus(); return; } openExpense(null); });
+$("#fabAdd").addEventListener("click",()=>{ if(!state.group){ promptNewGroup(); return; } if(state.members.length===0){ $("#personInput").focus(); return; } openExpense(null); });
+$("#expSave").addEventListener("click", saveExpense);
+$("#setSave").addEventListener("click", saveSettlement);
+$("#settingsBtn").addEventListener("click", openSettings);
+$("#bootstrapNew").addEventListener("click", promptNewGroup);
+
+$("#groupRename").addEventListener("input",()=>{ if(state.group) renameGroup($("#groupRename").value); });
+$("#groupRename").addEventListener("blur",()=>{ if(state.group && !(state.group.name||"").trim()){ renameGroup("Our Group"); $("#groupRename").value="Our Group"; } });
+$("#copyLink").addEventListener("click",()=>{ copyText(inviteLink()); toast("Invite link copied"); });
+$("#leaveGroupBtn").addEventListener("click", leaveGroup);
+$("#delGroupBtn").addEventListener("click", deleteGroup);
+$("#signOutBtn").addEventListener("click", signOut);
+
+const groupSwitchEl=$(".group-switch");
+$("#groupBtn").addEventListener("click",(e)=>{ e.stopPropagation(); if(groupSwitchEl.classList.contains("open")){ closeGroupMenu(); return; } buildGroupMenu(); groupSwitchEl.classList.add("open"); $("#groupBtn").setAttribute("aria-expanded","true"); });
+document.addEventListener("click",(e)=>{ if(groupSwitchEl.classList.contains("open") && !groupSwitchEl.contains(e.target)) closeGroupMenu(); });
+
+function promptNewGroup(){ const gs=$(".group-switch"); buildGroupMenu(); gs.classList.add("open"); $("#groupBtn").setAttribute("aria-expanded","true"); showNewGroupForm(); }
+
+function cfgErr(msg){ const e=$("#cfgMsg"); e.textContent=msg; e.style.display="block"; }
+$("#cfgSave").addEventListener("click", async ()=>{
+  const url=$("#cfgUrl").value.trim(); const key=$("#cfgKey").value.trim();
+  if(!/^https:\/\/.+\.supabase\.(co|in)/.test(url)){ cfgErr("That does not look like a Supabase project URL (it should end in .supabase.co)."); return; }
+  if(key.length<20){ cfgErr("That anon key looks too short \u2014 copy the full key."); return; }
+  saveCfg(url,key); $("#cfgMsg").style.display="none";
+  await window.addEventListener("unhandledrejection", (e)=>{ try{ alert("Unexpected error:\n"+((e.reason && (e.reason.message||e.reason)) || "unknown")); }catch(_){} });
+window.addEventListener("error", (e)=>{ try{ alert("Script error:\n"+(e.message||"unknown")); }catch(_){} });
+
+initClient();
+});
+
+function authMsg(msg, ok){ const e=$("#authMsg"); e.textContent=msg; e.className="auth-msg "+(ok?"ok":"err"); e.style.display="block"; }
+$("#tabEmail").addEventListener("click",()=>{ $("#tabEmail").classList.add("on"); $("#tabPhone").classList.remove("on"); $("#paneEmail").style.display="block"; $("#panePhone").style.display="none"; });
+$("#tabPhone").addEventListener("click",()=>{ $("#tabPhone").classList.add("on"); $("#tabEmail").classList.remove("on"); $("#panePhone").style.display="block"; $("#paneEmail").style.display="none"; });
+$("#sendEmail").addEventListener("click", async ()=>{
+  const email=$("#authEmail").value.trim(); if(!email.includes("@")){ authMsg("Enter a valid email.",false); return; }
+  const { error } = await supabase.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.origin+location.pathname+location.search } });
+  if(error) authMsg(error.message,false); else authMsg("Check your inbox for a sign-in link. You can open it on any device.",true);
+});
+$("#sendPhone").addEventListener("click", async ()=>{
+  const phone=$("#authPhone").value.trim(); if(phone.length<8){ authMsg("Enter your number in full international format, e.g. +15125551234.",false); return; }
+  const { error } = await supabase.auth.signInWithOtp({ phone });
+  if(error) authMsg(error.message,false); else { $("#codeWrap").style.display="block"; authMsg("We texted you a 6-digit code.",true); }
+});
+$("#verifyPhone").addEventListener("click", async ()=>{
+  const phone=$("#authPhone").value.trim(); const token=$("#authCode").value.trim();
+  const { error } = await supabase.auth.verifyOtp({ phone, token, type:"sms" });
+  if(error) authMsg(error.message,false);
+});
+$("#resetCfg").addEventListener("click",()=>{ clearCfg(); supabase=null; session=null; showScreen("config"); });
+
+async function initClient(){
+  const cfg=getCfg();
+  if(!cfg){ showScreen("config"); return; }
+  try{ supabase = createClient(cfg.url, cfg.anonKey); }
+  catch(e){ showScreen("config"); cfgErr("Could not connect with those details. Double-check and try again."); return; }
+  supabase.auth.onAuthStateChange((_evt, s)=>{ session=s; routeAuth(); });
+  const { data } = await supabase.auth.getSession();
+  session = data ? data.session : null;
+  await routeAuth();
+}
+let routing=false;
+async function routeAuth(){
+  if(routing) return; routing=true;
+  try{
+    if(!supabase){ showScreen("config"); return; }
+    if(!session){ showScreen("auth"); return; }
+    showScreen("app");
+    await loadGroups();
+    const params=new URLSearchParams(location.search);
+    const join=params.get("join");
+    if(join){
+      const { error } = await supabase.rpc("join_group",{ p_group: join });
+      if(error){ fail(error); }
+      else { await loadGroups(); saveActive(join); }
+      params.delete("join"); const qs=params.toString();
+      history.replaceState({}, "", location.pathname+(qs?("?"+qs):""));
+      if(!error){ await openGroup(join); return; }
     }
-  });
+    const active = getActive();
+    if(active && state.groups.some(g=>g.id===active)) await openGroup(active);
+    else if(state.groups.length) await openGroup(state.groups[0].id);
+    else { state.group=null; render(); }
+  } finally { routing=false; }
+}
+async function signOut(){
+  try{ await supabase.auth.signOut(); }catch(e){}
+  if(channel){ supabase.removeChannel(channel); channel=null; }
+  session=null; state={ groups:[], group:null, members:[], entries:[] };
+  closeScrim("#settingsScrim");
+  showScreen("auth");
+}
 
-  const gn = $("#groupName");
-  gn.addEventListener("input", () => { state.groupName = gn.value; save(); });
-  gn.addEventListener("blur", () => { if (!gn.value.trim()) { gn.value = "Our Group"; state.groupName = "Our Group"; save(); } });
+try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); }catch(e){ const b=$("#storageBanner"); if(b) b.classList.add("show"); }
 
-  // ---------------------------------------------------------------- boot
-  async function boot() {
-    await loadState();
-    if (!window.storage) { $("#storageBanner").classList.add("show"); }
-    gn.value = state.groupName || "Our Group";
-    render();
-  }
-  boot();
-})();
+initClient();
+
 </script>
 </body>
 </html>
